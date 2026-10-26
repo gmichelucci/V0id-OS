@@ -12,8 +12,8 @@ export default function MarketingAgencyView({
   const [instaToken, setInstaToken] = useState('IGQVJ...masked_token');
   const [instaAutoReels, setInstaAutoReels] = useState(true);
 
-  const [ghUser, setGhUser] = useState('v0id-os');
-  const [ghRepo, setGhRepo] = useState('space-tide');
+  const [ghUser, setGhUser] = useState('gmichelucci');
+  const [ghRepo, setGhRepo] = useState('V0id-OS');
   const [ghToken, setGhToken] = useState('ghp_...masked_token');
 
   // Generator State

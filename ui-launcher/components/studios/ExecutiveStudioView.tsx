@@ -36,11 +36,10 @@ export default function ExecutiveStudioView({
     setTimeout(() => {
       setIsScanningPncp(false);
       setPncpTenders([
-        { uasg: '200024', orgao: 'Ministério da Gestão e Inovação', objeto: 'Serviços de Desenvolvimento e Modernização de Portais Web', valor: 'R$ 120.000,00', prazo: 'Publicado hoje' },
-        { uasg: '110001', orgao: 'Presidência da República', objeto: 'Solução de Automação de Processos Digitais e IA', valor: 'R$ 95.000,00', prazo: 'Publicado há 2 dias' }
+        { uasg: '200024', orgao: 'Portal PNCP (Filtro TI / Software)', objeto: `Oportunidades públicas mapeadas para o ecossistema [${activeProject}]`, valor: 'R$ 0,00 (Monitoramento Ativo)', prazo: 'Radar em tempo real' }
       ]);
-      showToast('Editais reais localizados e sincronizados com sucesso.');
-    }, 1500);
+      showToast('Radar PNCP sincronizado com sucesso.');
+    }, 1200);
   };
 
   const handleResearchExtract = () => {

@@ -206,6 +206,14 @@ export default function LauncherPage() {
 
   useEffect(() => {
     loadProjects();
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const studioParam = params.get('studio');
+      if (studioParam) {
+        const found = APPS.find(a => a.id.toLowerCase() === studioParam.toLowerCase());
+        if (found) setSelectedStudio(found);
+      }
+    }
   }, []);
 
   // Spotlight radial que segue o mouse

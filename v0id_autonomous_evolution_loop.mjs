@@ -96,6 +96,19 @@ export async function runEvolutionCycle(cycleNumber = 1) {
 
 // Se executado diretamente
 const isDirect = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename || '');
-if (isDirect || process.argv.includes('--run-now')) {
-  runEvolutionCycle(1).catch(console.error);
+if (isDirect || process.argv.includes('--run-now') || process.argv.includes('--loop')) {
+  const isLoop = process.argv.includes('--loop');
+  const cyclesArg = process.argv.find(a => a.startsWith('--cycles='));
+  const totalCycles = cyclesArg ? parseInt(cyclesArg.split('=')[1]) : (isLoop ? 10 : 1);
+  const intervalMs = 15000;
+
+  (async () => {
+    for (let c = 1; c <= totalCycles; c++) {
+      await runEvolutionCycle(c);
+      if (c < totalCycles) {
+        console.log(`⏳ Aguardando ${intervalMs / 1000}s para o próximo ciclo...`);
+        await new Promise(r => setTimeout(r, intervalMs));
+      }
+    }
+  })().catch(console.error);
 }

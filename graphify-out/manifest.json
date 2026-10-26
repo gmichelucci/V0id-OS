@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/pages/index.tsx": {
-    "mtime": 1792973304.0121365,
-    "seen": 1792973403.4061897,
-    "ast_hash": "2df0656f988276a99a3a5336937652de",
+    "mtime": 1792982957.0568137,
+    "seen": 1792983264.1422646,
+    "ast_hash": "aa27cf140a51b1233c31d7e44f3e3620",
     "semantic_hash": ""
   },
   "ui-launcher/postcss.config.js": {
@@ -210,9 +210,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/ExecutiveStudioView.tsx": {
-    "mtime": 1792965584.9360287,
-    "seen": 1792965629.175762,
-    "ast_hash": "f9a85d30f7c3493a9b5ef937c11f50e6",
+    "mtime": 1792982729.4672928,
+    "seen": 1792983264.1422646,
+    "ast_hash": "7315c4f80d047040a47cfcd9c155ac6f",
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/GlobalChatView.tsx": {
@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/MarketingAgencyView.tsx": {
-    "mtime": 1792965592.0507834,
-    "seen": 1792965629.175762,
-    "ast_hash": "4170cec4a8ddbf0b9b51c3a4c845db69",
+    "mtime": 1792982685.3489554,
+    "seen": 1792983264.1422646,
+    "ast_hash": "b84eb1ffe6779175547ab280b8c6c9f3",
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/OmniMediaStudioView.tsx": {
@@ -354,9 +354,129 @@
     "semantic_hash": ""
   },
   "v0id_autonomous_evolution_loop.mjs": {
-    "mtime": 1792982183.419629,
-    "seen": 1792982230.6768374,
-    "ast_hash": "35243602913ba31f32294d1001d8de91",
+    "mtime": 1792983252.335686,
+    "seen": 1792983264.1422646,
+    "ast_hash": "8c5d9f6af58c95fd713b0598a3297b98",
+    "semantic_hash": ""
+  },
+  "v0id_capture_scenes.mjs": {
+    "mtime": 1792983225.7531996,
+    "seen": 1792983264.1422646,
+    "ast_hash": "b984ba2d1e59a81b5a89dad00069e9f9",
+    "semantic_hash": ""
+  },
+  "EVOLUTION_LOG.md": {
+    "mtime": 1792982246.448218,
+    "seen": 1792983264.1422646,
+    "ast_hash": "f22800f8dc95639a14307c2b09431067",
+    "semantic_hash": ""
+  },
+  "docs/SCENES_INDEX.md": {
+    "mtime": 1792983239.307122,
+    "seen": 1792983264.1422646,
+    "ast_hash": "6002e6e6c7ac93322bbf9d04cdf0c5ed",
+    "semantic_hash": ""
+  },
+  "docs/scenes/00_v0id_launcher_3d.png": {
+    "mtime": 1792983027.977209,
+    "seen": 1792983264.1422646,
+    "ast_hash": "581280990a4aea0ee336b2a12ec4c320",
+    "semantic_hash": ""
+  },
+  "docs/scenes/01_chat_global.png": {
+    "mtime": 1792983195.1162724,
+    "seen": 1792983264.1422646,
+    "ast_hash": "03f74daa1d99760f3b2928866ad0d29f",
+    "semantic_hash": ""
+  },
+  "docs/scenes/02_core_soul.png": {
+    "mtime": 1792983040.6574018,
+    "seen": 1792983264.1422646,
+    "ast_hash": "deef88da12051ffa5493a37e4edac354",
+    "semantic_hash": ""
+  },
+  "docs/scenes/03_auto_forge.png": {
+    "mtime": 1792983208.6412272,
+    "seen": 1792983264.1422646,
+    "ast_hash": "7fcb26694a4cde42df8b73f7e216c0d9",
+    "semantic_hash": ""
+  },
+  "docs/scenes/04_security_sandbox.png": {
+    "mtime": 1792983056.3007362,
+    "seen": 1792983264.1422646,
+    "ast_hash": "db00452b1cf6bb6620aa9ba614f58f48",
+    "semantic_hash": ""
+  },
+  "docs/scenes/05_plugins_mcp.png": {
+    "mtime": 1792983066.0219088,
+    "seen": 1792983264.1422646,
+    "ast_hash": "6af2236c68a442eae73a3cca629df78e",
+    "semantic_hash": ""
+  },
+  "docs/scenes/06_rules_system.png": {
+    "mtime": 1792983081.6710577,
+    "seen": 1792983264.1422646,
+    "ast_hash": "45c5fb5031d9dd08bdd2467f5bf201fb",
+    "semantic_hash": ""
+  },
+  "docs/scenes/07_automations_n8n.png": {
+    "mtime": 1792983092.8258934,
+    "seen": 1792983264.1422646,
+    "ast_hash": "ef2c6a13c84d333d068452676c005e1b",
+    "semantic_hash": ""
+  },
+  "docs/scenes/08_repository_hub.png": {
+    "mtime": 1792983103.095132,
+    "seen": 1792983264.1422646,
+    "ast_hash": "d2cfdbc35603e200948cc789fb02db91",
+    "semantic_hash": ""
+  },
+  "docs/scenes/09_code_studio.png": {
+    "mtime": 1792983112.5302925,
+    "seen": 1792983264.1422646,
+    "ast_hash": "4f6613c77137c752dec81d61ab5385ad",
+    "semantic_hash": ""
+  },
+  "docs/scenes/10_game_engine.png": {
+    "mtime": 1792983123.0362415,
+    "seen": 1792983264.1422646,
+    "ast_hash": "4b3e8b3b137e280638de26c4147e92cb",
+    "semantic_hash": ""
+  },
+  "docs/scenes/11_omnimedia_studio.png": {
+    "mtime": 1792983133.698208,
+    "seen": 1792983264.1422646,
+    "ast_hash": "4beb1217f0be0c97eb4e8f6fc6839fc9",
+    "semantic_hash": ""
+  },
+  "docs/scenes/12_research_studio.png": {
+    "mtime": 1792983152.3244102,
+    "seen": 1792983264.1422646,
+    "ast_hash": "b9b8456178a93146128ee096eda7cc02",
+    "semantic_hash": ""
+  },
+  "docs/scenes/13_marketing_agency.png": {
+    "mtime": 1792983164.745592,
+    "seen": 1792983264.1422646,
+    "ast_hash": "31a04a4047c565f4b15f5e06f3fc3f3c",
+    "semantic_hash": ""
+  },
+  "docs/scenes/14_finances_caixa.png": {
+    "mtime": 1792983177.3872788,
+    "seen": 1792983264.1422646,
+    "ast_hash": "fe19080801ee2fed162bdbd2b4690479",
+    "semantic_hash": ""
+  },
+  "screenshot_game.png": {
+    "mtime": 1792982968.3265567,
+    "seen": 1792983264.1422646,
+    "ast_hash": "26e12327ace16e80cb32bb0db6f2e558",
+    "semantic_hash": ""
+  },
+  "screenshot_home.png": {
+    "mtime": 1792982925.887756,
+    "seen": 1792983264.1422646,
+    "ast_hash": "cc3b7546acd7b4b1ed3b7226a1dd782c",
     "semantic_hash": ""
   }
 }
