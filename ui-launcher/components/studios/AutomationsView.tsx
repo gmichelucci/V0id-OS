@@ -227,11 +227,12 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
     const lines = recentLogs.split('\n');
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i];
-      if (line.includes('[1/5]')) return { label: 'Etapa 1/5: Suíte de 24 Testes & Auto-Cura', color: 'text-amber-300' };
-      if (line.includes('[2/5]')) return { label: 'Etapa 2/5: Mapeamento Visual & Fotos Edge Headless', color: 'text-cyan-300' };
-      if (line.includes('[3/5]')) return { label: 'Etapa 3/5: Avaliação OmniRoute dos 4 Pilares', color: 'text-indigo-300' };
-      if (line.includes('[4/5]')) return { label: 'Etapa 4/5: Validação TypeScript dos 14 Estúdios', color: 'text-emerald-300' };
-      if (line.includes('[5/5]')) return { label: 'Etapa 5/5: Sincronização AST (Graphify) & GitHub', color: 'text-purple-300' };
+      if (line.includes('[1/6]')) return { label: 'Etapa 1/6: Suíte de 24 Testes & Auto-Cura', color: 'text-amber-300' };
+      if (line.includes('[2/6]')) return { label: 'Etapa 2/6: Mapeamento Visual & Fotos Edge Headless', color: 'text-cyan-300' };
+      if (line.includes('[3/6]')) return { label: 'Etapa 3/6: Auditoria Interativa E2E & Botões', color: 'text-sky-300' };
+      if (line.includes('[4/6]')) return { label: 'Etapa 4/6: Inspeção Visual Multimodal por IA', color: 'text-pink-300' };
+      if (line.includes('[5/6]')) return { label: 'Etapa 5/6: Avaliação Cognitiva dos 4 Pilares', color: 'text-indigo-300' };
+      if (line.includes('[6/6]')) return { label: 'Etapa 6/6: Verificação TypeScript, AST & GitHub', color: 'text-purple-300' };
     }
     return { label: 'Processando ciclo em background...', color: 'text-emerald-300' };
   };
@@ -312,7 +313,7 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
               </span>
 
               {activeStep && (
-                <span className={`text-[11px] font-mono font-bold px-3 py-1 rounded-xl bg-black/60 border border-white/10 ${activeStep.color}`}>
+                <span className={`text-[11px] font-mono font-bold px-3 py-1 rounded-xl bg-black/70 border border-white/10 max-w-full truncate ${activeStep.color}`}>
                   ⚡ {activeStep.label}
                 </span>
               )}
@@ -431,14 +432,24 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
       </div>
 
       {/* Banner de Ajuda e Integração com Chat */}
-      <div className="bg-[#0b0b14] border border-indigo-500/20 rounded-2xl p-3.5 mb-4 text-[11px] text-gray-300 flex items-start gap-3">
-        <span className="text-base">💡</span>
+      <div className="bg-[#0b0b14] border border-indigo-500/20 rounded-2xl p-4 mb-4 text-xs text-gray-300 flex items-start gap-3 shadow-lg">
+        <span className="text-lg">💡</span>
         <div className="flex-1 leading-relaxed">
-          <strong>Como alterar ou criar automações?</strong>
-          <span className="text-gray-400 block mt-0.5">
-            • <strong>Pela Interface:</strong> Clique no botão <code>✏️ Editar</code> de qualquer card abaixo para ajustar o horário Cron, nome ou ação.<br />
-            • <strong>Pelo Chat Global:</strong> Você pode pedir ao orquestrador (ex: <em>&quot;V0id, mude o radar de editais para rodar de 1 em 1 hora&quot;</em> ou <em>&quot;Crie um robô diário para raspar o HackerNews às 07:00&quot;</em>) que o V0id programa o script e agenda a tarefa diretamente no Nexus DB.
-          </span>
+          <strong className="text-white text-xs block mb-2">Como alterar ou criar automações?</strong>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div className="bg-[#06060e] p-3 rounded-xl border border-white/5">
+              <span className="text-amber-400 font-bold block mb-1">1. Pela Interface Visual:</span>
+              <p className="text-gray-300 leading-snug">
+                Clique no botão <span className="text-indigo-300 font-mono font-semibold">✏️ Editar</span> em qualquer card abaixo para ajustar o horário Cron, nome ou o script em execução.
+              </p>
+            </div>
+            <div className="bg-[#06060e] p-3 rounded-xl border border-white/5">
+              <span className="text-cyan-400 font-bold block mb-1">2. Pelo Chat Global Soberano:</span>
+              <p className="text-gray-300 leading-snug">
+                Basta pedir no chat (ex: <em>&quot;V0id, altere o radar de editais para rodar a cada 1 hora&quot;</em>) que o V0id programa o script e agenda a tarefa diretamente no Nexus DB.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
