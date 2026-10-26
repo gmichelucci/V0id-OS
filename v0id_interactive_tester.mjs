@@ -14,7 +14,7 @@ const V0ID_ROOT = process.cwd().toLowerCase().endsWith('ui-launcher') ? path.res
 const EDGE_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const REPORT_FILE = path.join(V0ID_ROOT, 'docs', 'INTERACTIVE_TEST_REPORT.md');
 
-class EdgeCDPClient {
+export class EdgeCDPClient {
   constructor(port = 9226) {
     this.port = port;
     this.edgeProcess = null;
