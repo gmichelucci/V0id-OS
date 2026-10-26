@@ -7,7 +7,7 @@ export default function RepositoryView({
   activeProject: string;
   projectId?: string;
 }) {
-  const projectSlug = projectId || (activeProject || 'space_tide').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'space_tide';
+  const projectSlug = projectId || (activeProject || 'global').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'global';
 
   const [gitStatusOutput, setGitStatusOutput] = useState('');
   const [gitRunning, setGitRunning] = useState(false);
@@ -107,7 +107,7 @@ export default function RepositoryView({
               🐙 GitHub Terminal Bridge (Código & Jogos)
             </span>
             <span className="text-[10px] text-gray-400 font-mono">
-              03_chat_projects_nexus/projects-vault/{projectSlug}
+              projetos/{projectSlug}
             </span>
           </div>
 

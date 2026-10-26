@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === 'POST' && action === 'git') {
       const { gitCmd, projectId } = req.body;
       const targetDir = projectId
-        ? path.join(V0ID_ROOT, '03_chat_projects_nexus', 'projects-vault', projectId)
+        ? path.join(V0ID_ROOT, 'projetos', projectId)
         : V0ID_ROOT;
 
       try {
@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4. SINCRONIZAÇÃO GOOGLE DRIVE (REPOSITORY HUB)
     if (req.method === 'POST' && action === 'gdrive_sync') {
       const { projectId, gdrivePath } = req.body;
-      const sourceDir = path.join(V0ID_ROOT, '03_chat_projects_nexus', 'projects-vault', projectId || 'global');
+      const sourceDir = path.join(V0ID_ROOT, 'projetos', projectId || 'global');
       const targetDir = gdrivePath || 'G:/Meu Drive/V0id_Novelas';
 
       if (!fs.existsSync(sourceDir)) {

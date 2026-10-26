@@ -154,7 +154,7 @@ export default function OmniMediaStudioView({
             <div className="space-y-6">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>🔒 Cofre de Consistência Neural (IP-Adapter & Seeds)</span>
+                  <span>🔒 Cofre de Consistência Neural (IP-Adapter &amp; Seeds)</span>
                 </h3>
                 <p className="text-xs text-gray-400">
                   Garante que personagens, vozes clonadas e estilos visuais permaneçam 100% idênticos em todas as imagens, jogos e novelas.
@@ -196,7 +196,7 @@ export default function OmniMediaStudioView({
             <div className="space-y-6">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>🎨 Forja de Imagem 4K & Modelagem 3D (FLUX.1 / TRELLIS / RMBG-2.0)</span>
+                  <span>🎨 Forja de Imagem 4K e Modelagem 3D (FLUX.1 / TRELLIS / RMBG-2.0)</span>
                 </h3>
                 <p className="text-xs text-gray-400">
                   Geração de assets gráficos para jogos, texturas e renders de alta definição com remoção automática de fundo.
@@ -260,7 +260,7 @@ export default function OmniMediaStudioView({
                   <span className="text-2xl">🧊</span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-white">Blender 3D Suite & Cutscene Renderer</span>
+                      <span className="text-xs font-bold text-white">Blender 3D Suite e Cutscene Renderer</span>
                       <span className="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-1.5 py-0.5 rounded font-mono font-bold">
                         v4.2 LTS Instalado
                       </span>
@@ -326,7 +326,7 @@ export default function OmniMediaStudioView({
             <div className="space-y-6">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>🎙️ Laboratório de Áudio, Voz & Trilha (F5-TTS / Kokoro / MusicFX)</span>
+                  <span>🎙️ Laboratório de Áudio, Voz e Trilha (F5-TTS / Kokoro / MusicFX)</span>
                 </h3>
                 <p className="text-xs text-gray-400">
                   Clonagem instantânea de vozes com entonação dramática, efeitos sonoros e trilhas musicais geradas por IA.
@@ -382,7 +382,7 @@ export default function OmniMediaStudioView({
             <div className="space-y-6">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>🎞️ Timeline & Vídeo Master (LivePortrait / WhisperX / Remotion)</span>
+                  <span>🎞️ Timeline e Vídeo Master (LivePortrait / WhisperX / Remotion)</span>
                 </h3>
                 <p className="text-xs text-gray-400">
                   Montagem sequencial de cenas para novelas verticais, cutscenes de jogos e sincronia labial automática.

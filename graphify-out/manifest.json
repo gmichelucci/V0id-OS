@@ -174,9 +174,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/system.ts": {
-    "mtime": 1792966170.2844608,
-    "seen": 1792966523.3805134,
-    "ast_hash": "e771f3aad1d318222a3bc65cdce70c63",
+    "mtime": 1792982066.0352137,
+    "seen": 1792982230.6768374,
+    "ast_hash": "9dc51e8beaa1a49026111638d58021e7",
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/AutoForgeView.tsx": {
@@ -192,9 +192,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/CodeGameStudioView.tsx": {
-    "mtime": 1792963126.155382,
-    "seen": 1792963374.1302733,
-    "ast_hash": "c783430a3389a9e6ee0d75ec1e68df18",
+    "mtime": 1792981932.7065427,
+    "seen": 1792982230.6768374,
+    "ast_hash": "2e6397df95c36a0e81a7fe26810f060a",
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/CoreSoulView.tsx": {
@@ -228,9 +228,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/RepositoryView.tsx": {
-    "mtime": 1792963095.585969,
-    "seen": 1792963374.1302733,
-    "ast_hash": "13e0934a55f08c01de2a490b7dcd47a7",
+    "mtime": 1792982008.7122028,
+    "seen": 1792982230.6768374,
+    "ast_hash": "d759f331ca61c75570acec3a252515fd",
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/SecurityView.tsx": {
@@ -258,9 +258,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/OmniMediaStudioView.tsx": {
-    "mtime": 1792970828.1019673,
-    "seen": 1792970867.2189376,
-    "ast_hash": "1eac88c620aa6b84e1d8b6d218c65587",
+    "mtime": 1792981839.1799874,
+    "seen": 1792981865.9182873,
+    "ast_hash": "3c2fcc904896963c29da98d699c8c2ae",
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/PluginsMcpAuditView.tsx": {
@@ -282,9 +282,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/rea.ts": {
-    "mtime": 1792967273.6405733,
-    "seen": 1792967432.7407775,
-    "ast_hash": "93a86014b8c2414c9c9fd76b494e58aa",
+    "mtime": 1792982103.76072,
+    "seen": 1792982230.6768374,
+    "ast_hash": "f983526bc8bb9b061e5facc1422220e6",
     "semantic_hash": ""
   },
   "ui-launcher/components/V0idLogoBlackHoleBackdrop.tsx": {
@@ -299,34 +299,10 @@
     "ast_hash": "d3ee9125623b0ce5501dc2a91c0fb3e6",
     "semantic_hash": ""
   },
-  "03_chat_projects_nexus/projects-vault/global/src/v0id-game-engine/src_cpp/v0id_engine.cpp": {
-    "mtime": 1792969075.2956855,
-    "seen": 1792969387.1141865,
-    "ast_hash": "4e57cceb2ecdb94adf9a8e69abbf22c3",
-    "semantic_hash": ""
-  },
-  "03_chat_projects_nexus/projects-vault/global/src/v0id-game-engine/src_cpp/v0id_engine.h": {
-    "mtime": 1792969075.294642,
-    "seen": 1792969387.1141865,
-    "ast_hash": "9863c1f66dd20c904fba4ccd29e76726",
-    "semantic_hash": ""
-  },
-  "03_chat_projects_nexus/projects-vault/global/src/v0id-game-engine/tools/blender_export_pipeline.py": {
-    "mtime": 1792969075.2956855,
-    "seen": 1792969387.1141865,
-    "ast_hash": "64b9a224494971aab3dc3110ca7caa4f",
-    "semantic_hash": ""
-  },
   "ui-launcher/pages/api/game.ts": {
     "mtime": 1792973186.5236363,
     "seen": 1792973403.4061897,
     "ast_hash": "d8af740844e221ff5f2b46bbc5daf8da",
-    "semantic_hash": ""
-  },
-  "03_chat_projects_nexus/projects-vault/global/src/v0id-game-engine/assets/v0id_icon.svg": {
-    "mtime": 1792968275.2179368,
-    "seen": 1792969387.1141865,
-    "ast_hash": "d3ee9125623b0ce5501dc2a91c0fb3e6",
     "semantic_hash": ""
   },
   "04_studios_tools/game-studio/blender/blender_headless_pipeline.py": {
@@ -359,12 +335,6 @@
     "ast_hash": "64b9a224494971aab3dc3110ca7caa4f",
     "semantic_hash": ""
   },
-  "03_chat_projects_nexus/projects-vault/test/vault/README.md": {
-    "mtime": 1792972592.3932319,
-    "seen": 1792973403.4061897,
-    "ast_hash": "384edf1642f1a375353eabdf92c869fb",
-    "semantic_hash": ""
-  },
   "projetos/test/vault/README.md": {
     "mtime": 1792972592.3932319,
     "seen": 1792973403.4061897,
@@ -377,10 +347,16 @@
     "ast_hash": "d3ee9125623b0ce5501dc2a91c0fb3e6",
     "semantic_hash": ""
   },
-  "test_followup.mjs": {
-    "mtime": 1792976481.4645221,
-    "seen": 1792976940.5827038,
-    "ast_hash": "a1615c78e94350a97a8d65881bf9a22a",
+  "v0id_self_healing_suite.mjs": {
+    "mtime": 1792978566.1110835,
+    "seen": 1792978632.4775314,
+    "ast_hash": "85ba87d4d0249b3b52ee6a75c6683e1d",
+    "semantic_hash": ""
+  },
+  "v0id_autonomous_evolution_loop.mjs": {
+    "mtime": 1792982183.419629,
+    "seen": 1792982230.6768374,
+    "ast_hash": "35243602913ba31f32294d1001d8de91",
     "semantic_hash": ""
   }
 }

@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST' && action === 'scaffold_godot') {
     const { projectId = 'global', projectName = 'V0idGame' } = req.body;
     const v0idRoot = path.resolve(process.cwd(), '..');
-    const projectDir = path.join(v0idRoot, '03_chat_projects_nexus', 'projects-vault', projectId, 'src', 'game-godot');
+    const projectDir = path.join(v0idRoot, 'projetos', projectId, 'src', 'game-godot');
 
     try {
       fs.mkdirSync(projectDir, { recursive: true });

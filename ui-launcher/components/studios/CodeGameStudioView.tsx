@@ -20,7 +20,7 @@ export default function CodeGameStudioView({
   studioName?: string;
   isGameStudio?: boolean;
 }) {
-  const projectSlug = projectId || (activeProject || 'space_tide').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'space_tide';
+  const projectSlug = projectId || (activeProject || 'global').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'global';
 
   // State: Files & Editor
   const [files, setFiles] = useState<ProjectFile[]>([]);
