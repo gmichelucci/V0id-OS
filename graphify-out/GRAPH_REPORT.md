@@ -1,17 +1,17 @@
 # Graph Report - V0id  (2026-10-26)
 
 ## Corpus Check
-- 64 files · ~244,336 words
+- 69 files · ~206,423 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 12 file(s) not represented in the graph (top: .bat 3, .glb 2, .example 1)
+- Unclassified: 317 file(s) not represented in the graph (top: (none) 262, .old 28, .db 7)
 
 ## Summary
-- 383 nodes · 589 edges · 19 communities (12 shown, 7 thin omitted)
+- 388 nodes · 599 edges · 20 communities (13 shown, 7 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `070f5fcd`
+- Built from commit: `9ed0de87`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -30,8 +30,9 @@
 - StudioView.tsx
 - compilerOptions
 - v0id_blender_addon.py
-- projetos/test/vault/README.md
 - v0id_token_budget_loop.mjs
+- projetos/test/vault/README.md
+- ref_node_path
 
 ## God Nodes (most connected - your core abstractions)
 1. `NexusDB` - 23 edges
@@ -60,11 +61,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (19 total, 7 thin omitted)
+## Communities (20 total, 7 thin omitted)
 
 ### Community 0 - "agent.test.js"
-Cohesion: 0.05
-Nodes (38): agent, antiGhostAgent, bigText, checkpoint, cmdOut, compressed, diffContent, dirList (+30 more)
+Cohesion: 0.07
+Nodes (23): agent, antiGhostAgent, bigText, checkpoint, cmdOut, compressed, diffContent, dirList (+15 more)
 
 ### Community 3 - "index.js"
 Cohesion: 0.11
@@ -75,8 +76,8 @@ Cohesion: 0.11
 Nodes (17): bin, v0id, dependencies, ws, description, name, scripts, capture (+9 more)
 
 ### Community 6 - "game.ts"
-Cohesion: 0.10
-Nodes (14): next, getRecentLogs(), handler(), isLoopRunning(), LOG_FILE, PID_FILE, STOP_FILE, V0ID_ROOT (+6 more)
+Cohesion: 0.12
+Nodes (11): next, getRecentLogs(), handler(), isLoopRunning(), LOG_FILE, PID_FILE, RUNNER_LOG, STOP_FILE (+3 more)
 
 ### Community 7 - "🌑 V0ID OS — BLUEPRINT MESTRE & ESPECIFICAÇÃO OFICIAL (v4.0 FINAL)"
 Cohesion: 0.22
@@ -84,7 +85,7 @@ Nodes (8): 1. COMO O V0ID FUNCIONA (RESUMO EXECUTIVO EM 5 PASSOS), 2. DIAGRAMA G
 
 ### Community 8 - "🌑 V0ID OS"
 Cohesion: 0.08
-Nodes (20): 🌑 V0ID OS — MAPA VISUAL DAS CENAS E ESTÚDIOS, [CICLO DE AUDITORIA] 2026-10-26T02:37:26.445Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:06.270Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:52.445Z, 🌑 V0ID OS — LOG DE EVOLUÇÃO AUTÔNOMA E AUTO-CURA, 🎨 Catálogo dos 14 Estúdios de Produção, Comandos do Loop:, 🚀 Como Iniciar o Launcher (+12 more)
+Nodes (21): 🌑 V0ID OS — MAPA VISUAL DAS CENAS E ESTÚDIOS, [CICLO DE AUDITORIA] 2026-10-26T02:37:26.445Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:06.270Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:52.445Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:09:59.521Z, 🌑 V0ID OS — LOG DE EVOLUÇÃO AUTÔNOMA E AUTO-CURA, 🎨 Catálogo dos 14 Estúdios de Produção, Comandos do Loop: (+13 more)
 
 ### Community 9 - "ui-launcher/package.json"
 Cohesion: 0.08
@@ -106,29 +107,33 @@ Nodes (15): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModu
 Cohesion: 0.14
 Nodes (5): optimize_and_export(), parse_args(), V0ID_OT_ExportGameModel, V0ID_OT_ExportOmniMediaRender, V0ID_PT_MainPanel
 
-### Community 19 - "v0id_token_budget_loop.mjs"
-Cohesion: 0.09
-Nodes (20): dynamicImport, handler(), ENV_PATH, SOUL_PATH, appendLog(), LOG_FILE, runEvolutionCycle(), OUTPUT_DIR (+12 more)
+### Community 17 - "v0id_token_budget_loop.mjs"
+Cohesion: 0.21
+Nodes (13): captureAllScenes(), OUTPUT_DIR, SCENES, TEMP_PROFILE_DIR, appendLog(), LOG_FILE, logLive(), main() (+5 more)
+
+### Community 19 - "ref_node_path"
+Cohesion: 0.07
+Nodes (30): agent, rl, compressOutput(), tools, DB_PATH, __dirname, nexus, foundHistory (+22 more)
 
 ## Knowledge Gaps
 - **8 isolated node(s):** `speed`, `react-dom`, `@types/node`, `@types/react`, `autoprefixer` (+3 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 204 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 207 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `next` connect `game.ts` to `agent.test.js`, `ui-launcher/package.json`, `v0id_token_budget_loop.mjs`, `StudioView.tsx`?**
-  _High betweenness centrality (0.283) - this node is a cross-community bridge._
+- **Why does `next` connect `game.ts` to `StudioView.tsx`, `ui-launcher/package.json`, `ref_node_path`?**
+  _High betweenness centrality (0.282) - this node is a cross-community bridge._
 - **What connects `speed`, `react-dom`, `@types/node` to the rest of the system?**
   _8 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `agent.test.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.05194805194805195 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07389162561576355 - nodes in this community are weakly interconnected._
 - **Why does `react` connect `StudioView.tsx` to `ui-launcher/package.json`?**
-  _High betweenness centrality (0.127) - this node is a cross-community bridge._
+  _High betweenness centrality (0.125) - this node is a cross-community bridge._
 - **Should `NexusDB` be split into smaller, more focused modules?**
   _Cohesion score 0.09486166007905138 - nodes in this community are weakly interconnected._
-- **Why does `NexusDB` connect `NexusDB` to `agent.test.js`?**
-  _High betweenness centrality (0.085) - this node is a cross-community bridge._
+- **Why does `NexusDB` connect `NexusDB` to `ref_node_path`?**
+  _High betweenness centrality (0.084) - this node is a cross-community bridge._
 - **Should `index.js` be split into smaller, more focused modules?**
   _Cohesion score 0.10796221322537113 - nodes in this community are weakly interconnected._

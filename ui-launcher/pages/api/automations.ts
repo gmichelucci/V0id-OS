@@ -7,6 +7,7 @@ const V0ID_ROOT = path.resolve(process.cwd(), '..');
 const PID_FILE = path.join(V0ID_ROOT, 'v0id_loop.pid');
 const STOP_FILE = path.join(V0ID_ROOT, 'v0id_loop.stop');
 const LOG_FILE = path.join(V0ID_ROOT, 'EVOLUTION_LOG.md');
+const RUNNER_LOG = path.join(V0ID_ROOT, 'loop_runner.log');
 const SAFE_CHECKPOINT_TAG = 'v5.0-stable-gold-checkpoint';
 
 function isLoopRunning(): { running: boolean; pid?: number } {
@@ -26,15 +27,30 @@ function isLoopRunning(): { running: boolean; pid?: number } {
   }
 }
 
-function getRecentLogs(maxLines = 40): string {
-  if (!fs.existsSync(LOG_FILE)) return 'Nenhum log de evolução gerado ainda.';
-  try {
-    const content = fs.readFileSync(LOG_FILE, 'utf8');
-    const lines = content.split('\n');
-    return lines.slice(-maxLines).join('\n');
-  } catch {
-    return 'Erro ao ler arquivo de log.';
+function getRecentLogs(): string {
+  let output = '';
+
+  // 1. Streaming ao vivo do executor atual (loop_runner.log)
+  if (fs.existsSync(RUNNER_LOG)) {
+    try {
+      const runnerContent = fs.readFileSync(RUNNER_LOG, 'utf8').trim();
+      if (runnerContent) {
+        const lines = runnerContent.split('\n');
+        output += `⚡ [STREAMING AO VIVO DO MOTOR]\n` + lines.slice(-25).join('\n') + `\n\n`;
+      }
+    } catch {}
   }
+
+  // 2. Histórico consolidado em Markdown (EVOLUTION_LOG.md)
+  if (fs.existsSync(LOG_FILE)) {
+    try {
+      const content = fs.readFileSync(LOG_FILE, 'utf8').trim();
+      const lines = content.split('\n');
+      output += `📜 [HISTÓRICO CONSOLIDADO (EVOLUTION_LOG.md)]\n` + lines.slice(-25).join('\n');
+    } catch {}
+  }
+
+  return output.trim() || 'Nenhum log de evolução gerado ainda. Clique em "Iniciar Loop de Auto-Melhoria" para começar.';
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -42,11 +58,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'GET') {
     try {
       const { running, pid } = isLoopRunning();
-      const recentLogs = getRecentLogs(35);
+      const recentLogs = getRecentLogs();
       
       let gitCommit = 'Desconhecido';
       try {
-        gitCommit = execSync('git rev-parse --short HEAD', { cwd: V0ID_ROOT, encoding: 'utf8' }).trim();
+        gitCommit = execSync('git rev-parse --short HEAD', { cwd: V0ID_ROOT, encoding: 'utf8', windowsHide: true }).trim();
       } catch {}
 
       return res.status(200).json({
@@ -74,13 +90,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(200).json({ success: true, message: `Loop já está em execução (PID ${pid}).`, isRunning: true });
         }
 
-        if (fs.existsSync(STOP_FILE)) fs.unlinkSync(STOP_FILE);
+        if (fs.existsSync(STOP_FILE)) {
+          try { fs.unlinkSync(STOP_FILE); } catch {}
+        }
 
         const scriptPath = path.join(V0ID_ROOT, 'v0id_token_budget_loop.mjs');
+        const outFd = fs.openSync(RUNNER_LOG, 'a');
+
+        // Spawna com windowsHide: true e redirecionamento de stdio para RUNNER_LOG
+        // Isso impede completamente a abertura de qualquer janela de cmd preta na tela do usuário
         const child = spawn('node', [scriptPath], {
           cwd: V0ID_ROOT,
           detached: true,
-          stdio: 'ignore'
+          windowsHide: true,
+          stdio: ['ignore', outFd, outFd]
         });
         child.unref();
 
@@ -88,7 +111,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         return res.status(200).json({
           success: true,
-          message: '🚀 Loop de auto-evolução iniciado em background! Executará até esgotar os tokens do OmniRoute.',
+          message: '🚀 Loop de auto-evolução iniciado em background! Executará silenciosamente até esgotar os tokens do OmniRoute.',
           isRunning: true,
           pid: child.pid
         });
@@ -104,8 +127,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const { running, pid } = isLoopRunning();
         if (running && pid) {
           try {
-            process.kill(pid, 'SIGTERM');
-          } catch {}
+            execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore', windowsHide: true });
+          } catch {
+            try { process.kill(pid, 'SIGTERM'); } catch {}
+          }
         }
         try { if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE); } catch {}
         return res.status(200).json({ success: true, message: '⏹ Loop interrompido com sucesso.', isRunning: false });
@@ -121,13 +146,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         fs.writeFileSync(STOP_FILE, 'stop', 'utf8');
         const { running, pid } = isLoopRunning();
         if (running && pid) {
-          try { process.kill(pid, 'SIGKILL'); } catch {}
+          try {
+            execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore', windowsHide: true });
+          } catch {}
         }
         try { if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE); } catch {}
 
         console.log(`[ROLLBACK DE SEGURANÇA] Restaurando código para ${SAFE_CHECKPOINT_TAG}...`);
-        execSync(`git reset --hard ${SAFE_CHECKPOINT_TAG}`, { cwd: V0ID_ROOT, encoding: 'utf8' });
-        execSync('git clean -fd', { cwd: V0ID_ROOT, encoding: 'utf8' });
+        execSync(`git reset --hard ${SAFE_CHECKPOINT_TAG}`, { cwd: V0ID_ROOT, encoding: 'utf8', windowsHide: true });
+        execSync('git clean -fd', { cwd: V0ID_ROOT, encoding: 'utf8', windowsHide: true });
 
         return res.status(200).json({
           success: true,
@@ -143,9 +170,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (action === 'checkpoint') {
       try {
         const tagName = `checkpoint_manual_${Date.now()}`;
-        execSync(`git tag -a "${tagName}" -m "Manual checkpoint criado pelo usuário"`, { cwd: V0ID_ROOT, encoding: 'utf8' });
+        execSync(`git tag -a "${tagName}" -m "Manual checkpoint criado pelo usuário"`, { cwd: V0ID_ROOT, encoding: 'utf8', windowsHide: true });
         try {
-          execSync(`git push origin "${tagName}"`, { cwd: V0ID_ROOT, encoding: 'utf8', timeout: 25000 });
+          execSync(`git push origin "${tagName}"`, { cwd: V0ID_ROOT, encoding: 'utf8', timeout: 25000, windowsHide: true });
         } catch {}
 
         return res.status(200).json({

@@ -332,19 +332,19 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
           </button>
         </div>
 
-        {/* Terminal de Logs em Tempo Real (EVOLUTION_LOG.md) */}
+        {/* Terminal de Logs em Tempo Real */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              <span>Monitor em Tempo Real (EVOLUTION_LOG.md)</span>
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+              <span>Monitor em Tempo Real (Live Stream + EVOLUTION_LOG.md)</span>
             </span>
             <span className="text-[10px] text-gray-500 font-mono">Auto-refresh a cada 3s</span>
           </div>
 
           <pre
             ref={logTerminalRef}
-            className="p-4 bg-[#050509] border border-[#1e1e2d] rounded-2xl text-[11px] font-mono text-gray-300 h-48 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed"
+            className="p-4 bg-[#050509] border border-[#1e1e2d] rounded-2xl text-[11px] font-mono text-gray-300 h-64 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed shadow-inner"
           >
             {recentLogs}
           </pre>
