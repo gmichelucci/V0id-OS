@@ -287,17 +287,17 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
       </div>
 
       {/* ========================================================================= */}
-      {/* CARD PRINCIPAL REFORMULADO: MOTOR DE AUTO-EVOLUÇÃO CONTÍNUA              */}
+      {/* SEÇÃO PRINCIPAL: PAINEL DE CONTROLE DO MOTOR DE AUTO-EVOLUÇÃO             */}
       {/* ========================================================================= */}
-      <div className="bg-gradient-to-br from-[#0c0c18] via-[#090912] to-[#06060c] border border-amber-500/30 rounded-3xl p-5 mb-8 shadow-2xl relative overflow-hidden">
+      <div className="bg-[#090912] border border-amber-500/30 rounded-3xl p-6 mb-8 shadow-2xl relative">
         {/* Glow de Fundo */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-amber-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
 
-        {/* Barra Superior do Card: Status + Botão Principal */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 mb-4 border-b border-[#1c1c2e]">
+        {/* Linha 1: Título e Status */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 mb-5 border-b border-[#1c1c2e]">
           <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <BlackHoleIcon className="w-5 h-5 text-amber-400" />
+            <div className="flex items-center gap-3 flex-wrap mb-1">
+              <BlackHoleIcon className="w-6 h-6 text-amber-400" />
               <h3 className="text-base font-black text-white tracking-wide">
                 Motor de Auto-Melhoria, Auditoria 360º & Fotos Headless
               </h3>
@@ -312,23 +312,24 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
               </span>
 
               {activeStep && (
-                <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg bg-black/50 border border-white/10 ${activeStep.color}`}>
+                <span className={`text-[11px] font-mono font-bold px-3 py-1 rounded-xl bg-black/60 border border-white/10 ${activeStep.color}`}>
                   ⚡ {activeStep.label}
                 </span>
               )}
             </div>
 
-            <p className="text-[11px] text-gray-400 mt-1 max-w-3xl leading-relaxed">
-              Roda em segundo plano no Windows sem travar o sistema. Você pode sair desta tela ou voltar à Órbita 3D livremente — o motor encerra <em>somente</em> quando esgotar as cotas de tokens do OmniRoute ou ao clicar em interromper.
+            <p className="text-xs text-gray-400 leading-relaxed max-w-3xl">
+              Roda em segundo plano no Windows sem travar seu computador. Você pode sair desta tela ou navegar pela Órbita 3D livremente — o motor encerra <em>somente</em> quando esgotar as cotas de tokens do OmniRoute ou ao clicar em interromper.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Botão de Disparo / Interrupção */}
+          <div className="flex-shrink-0">
             {isLoopRunning ? (
               <button
                 onClick={stopEvolutionLoop}
                 disabled={isActionPending}
-                className="bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs px-5 py-3 rounded-2xl transition shadow-xl shadow-red-950/60 flex items-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs px-6 py-3.5 rounded-2xl transition shadow-xl shadow-red-950/60 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>⏹</span>
                 <span>Interromper Loop</span>
@@ -337,7 +338,7 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
               <button
                 onClick={startEvolutionLoop}
                 disabled={isActionPending}
-                className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-black font-black text-xs px-6 py-3 rounded-2xl transition shadow-2xl shadow-amber-950/60 flex items-center gap-2 cursor-pointer tracking-wide"
+                className="w-full sm:w-auto bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-black font-black text-xs px-7 py-3.5 rounded-2xl transition shadow-2xl shadow-amber-950/60 flex items-center justify-center gap-2 cursor-pointer tracking-wide"
               >
                 <span>⚡</span>
                 <span>Iniciar Loop de Auto-Melhoria</span>
@@ -346,84 +347,62 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
           </div>
         </div>
 
-        {/* GRADE SPLIT: MONITOR EM TEMPO REAL (ESQUERDA) + 4 PILARES E CHECKPOINT (DIREITA) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Coluna Esquerda: Terminal de Streaming ao Vivo (7 colunas) */}
-          <div className="lg:col-span-7 flex flex-col">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${isLoopRunning ? 'bg-amber-400 animate-ping' : 'bg-gray-600'}`}></span>
-                <span>Monitor ao Vivo do Motor (EVOLUTION_LOG.md)</span>
-              </span>
-              <span className="text-[10px] text-gray-500 font-mono">Streaming auto-refresh (3s)</span>
-            </div>
-
-            <pre
-              ref={logTerminalRef}
-              className="p-4 bg-[#030307] border border-[#1e1e2d] rounded-2xl text-[11px] font-mono text-gray-300 h-64 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed shadow-inner"
-            >
-              {recentLogs}
-            </pre>
+        {/* Linha 2: Terminal de Logs ao Vivo (Largura Total com visual de console) */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${isLoopRunning ? 'bg-amber-400 animate-ping' : 'bg-gray-600'}`}></span>
+              <span>Monitor em Tempo Real (Live Stream + EVOLUTION_LOG.md)</span>
+            </span>
+            <span className="text-[10px] text-gray-500 font-mono">Auto-refresh a cada 3s</span>
           </div>
 
-          {/* Coluna Direita: Os 4 Pilares Soberanos + Checkpoint Seguro (5 colunas) */}
-          <div className="lg:col-span-5 flex flex-col justify-between gap-3">
+          <pre
+            ref={logTerminalRef}
+            className="p-4 bg-[#030307] border border-[#222238] rounded-2xl text-[11px] font-mono text-gray-300 h-64 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed shadow-inner"
+          >
+            {recentLogs}
+          </pre>
+        </div>
+
+        {/* Linha 3: Os 4 Pilares Soberanos + Checkpoint Seguro */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 pt-4 border-t border-[#1c1c2e]">
+          <div className="bg-[#0e0e1a] p-3 rounded-2xl border border-[#222238]">
+            <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block mb-0.5">Pilar 01</span>
+            <p className="text-xs font-bold text-white mb-0.5">Core Security & OmniRoute</p>
+            <p className="text-[10px] text-gray-400">Sandbox SAST & Rotação Multi-Tier</p>
+          </div>
+
+          <div className="bg-[#0e0e1a] p-3 rounded-2xl border border-[#222238]">
+            <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider block mb-0.5">Pilar 02</span>
+            <p className="text-xs font-bold text-white mb-0.5">Auto-Forge & REA</p>
+            <p className="text-[10px] text-gray-400">Engenharia Reversa & Radar MCP</p>
+          </div>
+
+          <div className="bg-[#0e0e1a] p-3 rounded-2xl border border-[#222238]">
+            <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block mb-0.5">Pilar 03</span>
+            <p className="text-xs font-bold text-white mb-0.5">Nexus DB & Chat Global</p>
+            <p className="text-[10px] text-gray-400">Memória Multi-Turn no SQLite</p>
+          </div>
+
+          <div className="bg-[#0e0e1a] p-3 rounded-2xl border border-[#222238]">
+            <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block mb-0.5">Pilar 04</span>
+            <p className="text-xs font-bold text-white mb-0.5">Launcher 3D & 14 Estúdios</p>
+            <p className="text-[10px] text-gray-400">15 Cenas Mapeadas no Edge</p>
+          </div>
+
+          {/* Card de Checkpoint Ativo */}
+          <div className="bg-[#0e0e1a] border border-amber-500/25 rounded-2xl p-3 flex flex-col justify-between gap-2">
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
-                Arquitetura Soberana (V0ID_SPEC.md)
-              </span>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-[#0e0e1a] p-2.5 rounded-xl border border-[#222238]">
-                  <span className="text-[9px] text-amber-400 font-bold uppercase tracking-wider block">Pilar 01</span>
-                  <p className="text-[11px] font-bold text-white leading-tight">Core Security & OmniRoute</p>
-                  <p className="text-[9px] text-gray-400 mt-0.5">Sandbox SAST & Rotação Multi-Tier</p>
-                </div>
-
-                <div className="bg-[#0e0e1a] p-2.5 rounded-xl border border-[#222238]">
-                  <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider block">Pilar 02</span>
-                  <p className="text-[11px] font-bold text-white leading-tight">Auto-Forge & REA</p>
-                  <p className="text-[9px] text-gray-400 mt-0.5">Engenharia Reversa & Radar MCP</p>
-                </div>
-
-                <div className="bg-[#0e0e1a] p-2.5 rounded-xl border border-[#222238]">
-                  <span className="text-[9px] text-cyan-400 font-bold uppercase tracking-wider block">Pilar 03</span>
-                  <p className="text-[11px] font-bold text-white leading-tight">Nexus DB & Chat Global</p>
-                  <p className="text-[9px] text-gray-400 mt-0.5">Memória Persistente SQLite</p>
-                </div>
-
-                <div className="bg-[#0e0e1a] p-2.5 rounded-xl border border-[#222238]">
-                  <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">Pilar 04</span>
-                  <p className="text-[11px] font-bold text-white leading-tight">Launcher 3D & 14 Estúdios</p>
-                  <p className="text-[9px] text-gray-400 mt-0.5">15 Cenas Mapeadas no Edge</p>
-                </div>
-              </div>
+              <span className="text-[10px] text-gray-400 block mb-0.5">Versão Segura:</span>
+              <p className="text-xs font-bold text-amber-300 font-mono truncate">{safeCheckpointTag}</p>
             </div>
-
-            {/* Card de Checkpoint Ativo */}
-            <div className="bg-[#0e0e1a] border border-amber-500/20 rounded-xl p-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <span className="text-xl">🛡️</span>
-                <div>
-                  <p className="text-[11px] font-bold text-white flex items-center gap-1.5 flex-wrap">
-                    <span>Versão Segura:</span>
-                    <span className="text-amber-300 font-mono bg-amber-950/60 px-2 py-0.5 rounded text-[10px] border border-amber-800/50">
-                      {safeCheckpointTag}
-                    </span>
-                  </p>
-                  <p className="text-[10px] text-gray-400">
-                    Commit: <code className="text-gray-300 font-mono">{currentCommit || '070f5fc'}</code>
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setRollbackModalOpen(true)}
-                className="bg-red-950/50 hover:bg-red-900/80 text-red-200 border border-red-500/40 text-[10px] font-bold px-3 py-1.5 rounded-lg transition cursor-pointer flex-shrink-0"
-              >
-                ⏪ Reverter
-              </button>
-            </div>
+            <button
+              onClick={() => setRollbackModalOpen(true)}
+              className="bg-red-950/60 hover:bg-red-900/80 text-red-200 border border-red-500/40 text-[10px] font-bold px-3 py-1.5 rounded-xl transition cursor-pointer w-full text-center"
+            >
+              ⏪ Reverter
+            </button>
           </div>
         </div>
       </div>

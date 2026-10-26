@@ -4,7 +4,7 @@
   "2": "NexusDB",
   "3": "index.js",
   "4": "package.json",
-  "5": "cli.js",
+  "5": "V0idAgent",
   "6": "automations.ts",
   "7": "🌑 V0ID OS — BLUEPRINT MESTRE & ESPECIFICAÇÃO OFICIAL (v4.0 FINAL)",
   "8": "🌑 V0ID OS",
@@ -18,9 +18,6 @@
   "16": "v0id_blender_addon.py",
   "17": "v0id_token_budget_loop.mjs",
   "18": "projetos/test/vault/README.md",
-  "19": "ref_node_fs",
-  "20": "ref_node_path",
-  "21": "v0id_self_healing_suite.mjs",
-  "22": "nexus.test.js",
-  "23": "projects.ts"
+  "19": "ref_node_path",
+  "20": "audit_1792996689143/vault/README.md"
 }
