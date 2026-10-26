@@ -13,7 +13,7 @@ export class OmniRouter {
   }
 
   getAvailableProviders(options = {}) {
-    const list = [];
+    let list = [];
     const isUncensored = options.uncensored === true;
 
     // Multiple Gemini Keys support
@@ -52,16 +52,7 @@ export class OmniRouter {
 
     if (geminiKeys.length > 0) {
       geminiKeys.forEach((key, idx) => {
-        // 1º Titular: Argon
-        list.push({
-          id: `gemini_argon_${idx}`,
-          name: `Gemini 4 Argon (Elite) [Key ${idx + 1}]`,
-          tier: 1,
-          type: 'gemini',
-          key,
-          model: 'gemini-4-argon'
-        });
-        // 1º Titular Backup: Pro
+        // 1º Titular: Pro
         list.push({
           id: `gemini_pro_${idx}`,
           name: `Gemini 3.1 Pro (Elite) [Key ${idx + 1}]`,
@@ -101,10 +92,26 @@ export class OmniRouter {
     }
 
     // =========================================================================
-    // 3º RESERVA DE ALTA DISPONIBILIDADE: Gemini 3.8 / 3.5 Flash
+    // 3º RESERVA DE ALTA DISPONIBILIDADE: Gemini 3.5 Flash / 3 Flash Preview / 3.8
     // =========================================================================
     if (geminiKeys.length > 0) {
       geminiKeys.forEach((key, idx) => {
+        list.push({
+          id: `gemini_flash35_${idx}`,
+          name: `Gemini 3.5 Flash (Ultra-Rápido) [Key ${idx + 1}]`,
+          tier: 3,
+          type: 'gemini',
+          key,
+          model: 'gemini-3.5-flash'
+        });
+        list.push({
+          id: `gemini_flash30_${idx}`,
+          name: `Gemini 3 Flash Preview [Key ${idx + 1}]`,
+          tier: 3,
+          type: 'gemini',
+          key,
+          model: 'gemini-3-flash-preview'
+        });
         list.push({
           id: `gemini_flash38_${idx}`,
           name: `Gemini 3.8 Flash (Alta Disp.) [Key ${idx + 1}]`,
@@ -112,14 +119,6 @@ export class OmniRouter {
           type: 'gemini',
           key,
           model: 'gemini-3.8-flash'
-        });
-        list.push({
-          id: `gemini_flash35_${idx}`,
-          name: `Gemini 3.5 Flash (Alta Disp.) [Key ${idx + 1}]`,
-          tier: 3,
-          type: 'gemini',
-          key,
-          model: 'gemini-3.5-flash'
         });
       });
     }
@@ -137,6 +136,11 @@ export class OmniRouter {
         key: process.env.OPENROUTER_API_KEY,
         model: process.env.OPENROUTER_FREE_MODEL || 'google/gemma-4-31b-it:free'
       });
+    }
+
+    // Se requisição inclui imagens (visão computacional), roteia apenas para modelos com suporte a visão
+    if (options.images && options.images.length > 0) {
+      list = list.filter(p => p.type === 'gemini');
     }
 
     return list;
