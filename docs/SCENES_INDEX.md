@@ -1,6 +1,6 @@
 # 🌑 V0ID OS — MAPA VISUAL DAS CENAS E ESTÚDIOS
 
-Mapeamento autônomo executado em: **2026-10-26T07:07:35.117Z**
+Mapeamento autônomo executado em: **2026-10-26T07:09:40.823Z**
 
 | Estúdio | ID | Arquivo de Captura | Tamanho |
 |---|---|---|---|
@@ -8,14 +8,14 @@ Mapeamento autônomo executado em: **2026-10-26T07:07:35.117Z**
 | **01_chat_global** | `chat` | [01_chat_global.png](./scenes/01_chat_global.png) | 99.1 KB |
 | **02_core_soul** | `core` | [02_core_soul.png](./scenes/02_core_soul.png) | 116.7 KB |
 | **03_auto_forge** | `auto-forge` | [03_auto_forge.png](./scenes/03_auto_forge.png) | 505.7 KB |
-| **04_security_sandbox** | `security` | [04_security_sandbox.png](./scenes/04_security_sandbox.png) | 66.8 KB |
+| **04_security_sandbox** | `security` | [04_security_sandbox.png](./scenes/04_security_sandbox.png) | 505.7 KB |
 | **05_plugins_mcp** | `plugins` | [05_plugins_mcp.png](./scenes/05_plugins_mcp.png) | 505.7 KB |
-| **06_rules_system** | `rules` | [06_rules_system.png](./scenes/06_rules_system.png) | 505.7 KB |
-| **07_automations_n8n** | `automations` | [07_automations_n8n.png](./scenes/07_automations_n8n.png) | 505.7 KB |
+| **06_rules_system** | `rules` | [06_rules_system.png](./scenes/06_rules_system.png) | 100.7 KB |
+| **07_automations_n8n** | `automations` | [07_automations_n8n.png](./scenes/07_automations_n8n.png) | 102.0 KB |
 | **08_repository_hub** | `repository` | [08_repository_hub.png](./scenes/08_repository_hub.png) | 47.0 KB |
-| **09_code_studio** | `code` | [09_code_studio.png](./scenes/09_code_studio.png) | 65.4 KB |
+| **09_code_studio** | `code` | [09_code_studio.png](./scenes/09_code_studio.png) | 505.7 KB |
 | **10_game_engine** | `game` | [10_game_engine.png](./scenes/10_game_engine.png) | 90.8 KB |
 | **11_omnimedia_studio** | `omnimedia` | [11_omnimedia_studio.png](./scenes/11_omnimedia_studio.png) | 60.9 KB |
-| **12_research_studio** | `research` | [12_research_studio.png](./scenes/12_research_studio.png) | 505.7 KB |
-| **13_marketing_agency** | `marketing` | [13_marketing_agency.png](./scenes/13_marketing_agency.png) | 505.7 KB |
-| **14_finances_caixa** | `finances` | [14_finances_caixa.png](./scenes/14_finances_caixa.png) | 40.3 KB |
+| **12_research_studio** | `research` | [12_research_studio.png](./scenes/12_research_studio.png) | 94.9 KB |
+| **13_marketing_agency** | `marketing` | [13_marketing_agency.png](./scenes/13_marketing_agency.png) | 70.6 KB |
+| **14_finances_caixa** | `finances` | [14_finances_caixa.png](./scenes/14_finances_caixa.png) | 505.7 KB |
