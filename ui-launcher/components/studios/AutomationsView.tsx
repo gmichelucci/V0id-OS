@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import BlackHoleIcon from '../icons/BlackHoleIcon';
 
-interface AutomationFlow {
+export interface AutomationFlow {
   id: string;
   name: string;
   trigger: string;
@@ -11,7 +11,7 @@ interface AutomationFlow {
   lastRun: string;
 }
 
-const FLOWS: AutomationFlow[] = [
+const DEFAULT_FLOWS: AutomationFlow[] = [
   {
     id: 'pncp-scout',
     name: 'Radar Autônomo de Editais PNCP (Gov.br)',
@@ -51,7 +51,7 @@ const FLOWS: AutomationFlow[] = [
 ];
 
 export default function AutomationsView({ activeProject }: { activeProject: string }) {
-  const [flows, setFlows] = useState<AutomationFlow[]>(FLOWS);
+  const [flows, setFlows] = useState<AutomationFlow[]>(DEFAULT_FLOWS);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Estado do Loop de Auto-Evolução e Orçamento de Tokens
@@ -62,6 +62,10 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
   const [safeCheckpointTag, setSafeCheckpointTag] = useState<string>('v5.0-stable-gold-checkpoint');
   const [isActionPending, setIsActionPending] = useState(false);
   const [rollbackModalOpen, setRollbackModalOpen] = useState(false);
+
+  // Modal de Edição / Criação de Fluxo Cron
+  const [editingFlow, setEditingFlow] = useState<AutomationFlow | null>(null);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
 
   const logTerminalRef = useRef<HTMLPreElement | null>(null);
 
@@ -90,6 +94,13 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
     const interval = setInterval(fetchStatus, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Auto-scroll para acompanhar novos logs
+  useEffect(() => {
+    if (logTerminalRef.current) {
+      logTerminalRef.current.scrollTop = logTerminalRef.current.scrollHeight;
+    }
+  }, [recentLogs]);
 
   // Iniciar Loop Contínuo até acabar tokens
   const startEvolutionLoop = async () => {
@@ -120,6 +131,8 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
       if (data.success) {
         setIsLoopRunning(false);
         showToast(data.message || '⏹ Loop interrompido.');
+      } else {
+        showToast(`Erro ao parar: ${data.error}`);
       }
     } catch (err: any) {
       showToast(`Erro ao parar: ${err.message}`);
@@ -180,16 +193,61 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
     }));
   };
 
+  const handleSaveFlow = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFlow) return;
+
+    if (isCreatingNew) {
+      setFlows(prev => [...prev, editingFlow]);
+      showToast(`✨ Nova automação "${editingFlow.name}" criada com sucesso!`);
+    } else {
+      setFlows(prev => prev.map(f => f.id === editingFlow.id ? editingFlow : f));
+      showToast(`💾 Automação "${editingFlow.name}" atualizada com sucesso!`);
+    }
+    setEditingFlow(null);
+    setIsCreatingNew(false);
+  };
+
+  const openCreateModal = () => {
+    setEditingFlow({
+      id: `flow-${Date.now()}`,
+      name: 'Novo Robô Autônomo',
+      trigger: 'Diariamente às 10:00',
+      schedule: '0 10 * * *',
+      action: 'Executar tarefa programada e registrar em vault/output.json',
+      status: 'ATIVO',
+      lastRun: 'Nunca executado'
+    });
+    setIsCreatingNew(true);
+  };
+
+  // Extrai a etapa atual ativa dos logs para exibir no cabeçalho
+  const getActiveStep = () => {
+    if (!isLoopRunning) return null;
+    const lines = recentLogs.split('\n');
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i];
+      if (line.includes('[1/5]')) return { label: 'Etapa 1/5: Suíte de 24 Testes & Auto-Cura', color: 'text-amber-300' };
+      if (line.includes('[2/5]')) return { label: 'Etapa 2/5: Mapeamento Visual & Fotos Edge Headless', color: 'text-cyan-300' };
+      if (line.includes('[3/5]')) return { label: 'Etapa 3/5: Avaliação OmniRoute dos 4 Pilares', color: 'text-indigo-300' };
+      if (line.includes('[4/5]')) return { label: 'Etapa 4/5: Validação TypeScript dos 14 Estúdios', color: 'text-emerald-300' };
+      if (line.includes('[5/5]')) return { label: 'Etapa 5/5: Sincronização AST (Graphify) & GitHub', color: 'text-purple-300' };
+    }
+    return { label: 'Processando ciclo em background...', color: 'text-emerald-300' };
+  };
+
+  const activeStep = getActiveStep();
+
   return (
-    <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-[#040408] select-text">
+    <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-[#040408] text-gray-200 select-text">
       {toastMsg && (
         <div className="fixed top-4 right-4 z-50 bg-indigo-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-2xl border border-indigo-400/40 animate-fade-in">
           {toastMsg}
         </div>
       )}
 
-      {/* Header Principal */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#181824]">
+      {/* Header do Estúdio */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#181824]">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
             <span className="text-xl">🤖</span>
@@ -201,15 +259,16 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
             </span>
           </div>
           <p className="text-xs text-gray-400">
-            Controle de processos em background, loops autônomos contínuos de auto-melhoria e ponto de restauração com rollback seguro.
+            Controle de processos em background, rotinas agendadas (Cron) e auto-evolução contínua até esgotar cotas de tokens.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={createNewCheckpoint}
             disabled={isActionPending}
             className="bg-[#121220] hover:bg-[#1c1c30] text-gray-200 border border-[#26263e] text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5"
+            title="Gera uma tag de segurança no Git"
           >
             <span>💾</span>
             <span>Salvar Checkpoint</span>
@@ -219,6 +278,7 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
             onClick={() => setRollbackModalOpen(true)}
             disabled={isActionPending}
             className="bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-500/40 text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5"
+            title="Restaura instantaneamente a versão Gold aprovada"
           >
             <span>⏪</span>
             <span>Restaurar Versão Segura</span>
@@ -227,19 +287,21 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
       </div>
 
       {/* ========================================================================= */}
-      {/* SEÇÃO PRINCIPAL: MOTOR DE AUTO-EVOLUÇÃO CONTÍNUA (ATÉ ACABAR TOKENS)      */}
+      {/* CARD PRINCIPAL REFORMULADO: MOTOR DE AUTO-EVOLUÇÃO CONTÍNUA              */}
       {/* ========================================================================= */}
-      <div className="bg-gradient-to-br from-[#0c0c18] via-[#090912] to-[#06060c] border border-amber-500/30 rounded-3xl p-6 mb-8 shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#0c0c18] via-[#090912] to-[#06060c] border border-amber-500/30 rounded-3xl p-5 mb-8 shadow-2xl relative overflow-hidden">
         {/* Glow de Fundo */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <BlackHoleIcon className="w-6 h-6 text-amber-400" />
-              <h3 className="text-lg font-black text-white tracking-wide">
-                Motor de Auto-Melhoria, Auditoria 360º & Mapeamento Visual
+        {/* Barra Superior do Card: Status + Botão Principal */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 mb-4 border-b border-[#1c1c2e]">
+          <div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <BlackHoleIcon className="w-5 h-5 text-amber-400" />
+              <h3 className="text-base font-black text-white tracking-wide">
+                Motor de Auto-Melhoria, Auditoria 360º & Fotos Headless
               </h3>
+              
               <span className={`text-[10px] font-mono font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 ${
                 isLoopRunning
                   ? 'bg-emerald-950 text-emerald-300 border-emerald-500/60 animate-pulse'
@@ -248,21 +310,25 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
                 <span className={`w-2 h-2 rounded-full ${isLoopRunning ? 'bg-emerald-400' : 'bg-gray-500'}`}></span>
                 {isLoopRunning ? `EM EXECUÇÃO CONTÍNUA (PID ${loopPid || 'ATIVO'})` : 'EM ESPERA'}
               </span>
+
+              {activeStep && (
+                <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg bg-black/50 border border-white/10 ${activeStep.color}`}>
+                  ⚡ {activeStep.label}
+                </span>
+              )}
             </div>
 
-            <p className="text-xs text-gray-300 leading-relaxed max-w-3xl">
-              Executa ciclos ininterruptos: <strong>(1) Suíte de 24 Testes</strong> → <strong>(2) Fotos dos 15 Estúdios no Edge Headless</strong> → <strong>(3) Análise Cognitiva OmniRoute dos 4 Pilares</strong> → <strong>(4) Validação TypeScript</strong> → <strong>(5) Sincronização AST e Git</strong>. 
-              A execução encerra <em>apenas</em> quando todas as cotas de tokens do OmniRoute forem consumidas ou mediante parada manual.
+            <p className="text-[11px] text-gray-400 mt-1 max-w-3xl leading-relaxed">
+              Roda em segundo plano no Windows sem travar o sistema. Você pode sair desta tela ou voltar à Órbita 3D livremente — o motor encerra <em>somente</em> quando esgotar as cotas de tokens do OmniRoute ou ao clicar em interromper.
             </p>
           </div>
 
-          {/* Botão Principal de Disparo */}
           <div className="flex items-center gap-3 flex-shrink-0">
             {isLoopRunning ? (
               <button
                 onClick={stopEvolutionLoop}
                 disabled={isActionPending}
-                className="bg-red-600 hover:bg-red-500 text-white font-extrabold text-sm px-6 py-3.5 rounded-2xl transition shadow-xl shadow-red-950/60 flex items-center gap-2 cursor-pointer"
+                className="bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs px-5 py-3 rounded-2xl transition shadow-xl shadow-red-950/60 flex items-center gap-2 cursor-pointer"
               >
                 <span>⏹</span>
                 <span>Interromper Loop</span>
@@ -271,7 +337,7 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
               <button
                 onClick={startEvolutionLoop}
                 disabled={isActionPending}
-                className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-black font-black text-sm px-7 py-3.5 rounded-2xl transition shadow-2xl shadow-amber-950/60 flex items-center gap-2 cursor-pointer tracking-wide"
+                className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-black font-black text-xs px-6 py-3 rounded-2xl transition shadow-2xl shadow-amber-950/60 flex items-center gap-2 cursor-pointer tracking-wide"
               >
                 <span>⚡</span>
                 <span>Iniciar Loop de Auto-Melhoria</span>
@@ -280,85 +346,124 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
           </div>
         </div>
 
-        {/* Grade de 4 Pilares do Diagrama Inicial */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="bg-[#0e0e1a] p-3.5 rounded-2xl border border-[#222238]">
-            <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block mb-1">Pilar 01</span>
-            <p className="text-xs font-bold text-white mb-0.5">Core Security & OmniRoute</p>
-            <p className="text-[10px] text-gray-400">Proteção de saldo, sandbox SAST e rotação multi-modelo.</p>
+        {/* GRADE SPLIT: MONITOR EM TEMPO REAL (ESQUERDA) + 4 PILARES E CHECKPOINT (DIREITA) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Coluna Esquerda: Terminal de Streaming ao Vivo (7 colunas) */}
+          <div className="lg:col-span-7 flex flex-col">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${isLoopRunning ? 'bg-amber-400 animate-ping' : 'bg-gray-600'}`}></span>
+                <span>Monitor ao Vivo do Motor (EVOLUTION_LOG.md)</span>
+              </span>
+              <span className="text-[10px] text-gray-500 font-mono">Streaming auto-refresh (3s)</span>
+            </div>
+
+            <pre
+              ref={logTerminalRef}
+              className="p-4 bg-[#030307] border border-[#1e1e2d] rounded-2xl text-[11px] font-mono text-gray-300 h-64 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed shadow-inner"
+            >
+              {recentLogs}
+            </pre>
           </div>
 
-          <div className="bg-[#0e0e1a] p-3.5 rounded-2xl border border-[#222238]">
-            <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider block mb-1">Pilar 02</span>
-            <p className="text-xs font-bold text-white mb-0.5">Auto-Forge & REA</p>
-            <p className="text-[10px] text-gray-400">Engenharia reversa e radar de ferramentas MCP web.</p>
-          </div>
-
-          <div className="bg-[#0e0e1a] p-3.5 rounded-2xl border border-[#222238]">
-            <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block mb-1">Pilar 03</span>
-            <p className="text-xs font-bold text-white mb-0.5">Nexus DB & Chat Global</p>
-            <p className="text-[10px] text-gray-400">Memória multi-turn persistente no SQLite e orquestrador.</p>
-          </div>
-
-          <div className="bg-[#0e0e1a] p-3.5 rounded-2xl border border-[#222238]">
-            <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block mb-1">Pilar 04</span>
-            <p className="text-xs font-bold text-white mb-0.5">Launcher 3D & 14 Estúdios</p>
-            <p className="text-[10px] text-gray-400">15 cenas mapeadas, interface orbital e isolamento local.</p>
-          </div>
-        </div>
-
-        {/* Card do Checkpoint Ativo */}
-        <div className="bg-[#10101c] border border-amber-500/25 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🛡️</span>
+          {/* Coluna Direita: Os 4 Pilares Soberanos + Checkpoint Seguro (5 colunas) */}
+          <div className="lg:col-span-5 flex flex-col justify-between gap-3">
             <div>
-              <p className="text-xs font-bold text-white flex items-center gap-2">
-                <span>Ponto de Restauração Seguro Ativo:</span>
-                <span className="text-amber-300 font-mono bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/50">
-                  {safeCheckpointTag}
-                </span>
-              </p>
-              <p className="text-[11px] text-gray-400 mt-0.5">
-                Commit atual: <code className="text-gray-300 font-mono">{currentCommit || '070f5fc'}</code> • Caso qualquer alteração não agrade, o botão de restauração reverte 100% dos arquivos imediatamente.
-              </p>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
+                Arquitetura Soberana (V0ID_SPEC.md)
+              </span>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-[#0e0e1a] p-2.5 rounded-xl border border-[#222238]">
+                  <span className="text-[9px] text-amber-400 font-bold uppercase tracking-wider block">Pilar 01</span>
+                  <p className="text-[11px] font-bold text-white leading-tight">Core Security & OmniRoute</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">Sandbox SAST & Rotação Multi-Tier</p>
+                </div>
+
+                <div className="bg-[#0e0e1a] p-2.5 rounded-xl border border-[#222238]">
+                  <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider block">Pilar 02</span>
+                  <p className="text-[11px] font-bold text-white leading-tight">Auto-Forge & REA</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">Engenharia Reversa & Radar MCP</p>
+                </div>
+
+                <div className="bg-[#0e0e1a] p-2.5 rounded-xl border border-[#222238]">
+                  <span className="text-[9px] text-cyan-400 font-bold uppercase tracking-wider block">Pilar 03</span>
+                  <p className="text-[11px] font-bold text-white leading-tight">Nexus DB & Chat Global</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">Memória Persistente SQLite</p>
+                </div>
+
+                <div className="bg-[#0e0e1a] p-2.5 rounded-xl border border-[#222238]">
+                  <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">Pilar 04</span>
+                  <p className="text-[11px] font-bold text-white leading-tight">Launcher 3D & 14 Estúdios</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">15 Cenas Mapeadas no Edge</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Card de Checkpoint Ativo */}
+            <div className="bg-[#0e0e1a] border border-amber-500/20 rounded-xl p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">🛡️</span>
+                <div>
+                  <p className="text-[11px] font-bold text-white flex items-center gap-1.5 flex-wrap">
+                    <span>Versão Segura:</span>
+                    <span className="text-amber-300 font-mono bg-amber-950/60 px-2 py-0.5 rounded text-[10px] border border-amber-800/50">
+                      {safeCheckpointTag}
+                    </span>
+                  </p>
+                  <p className="text-[10px] text-gray-400">
+                    Commit: <code className="text-gray-300 font-mono">{currentCommit || '070f5fc'}</code>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setRollbackModalOpen(true)}
+                className="bg-red-950/50 hover:bg-red-900/80 text-red-200 border border-red-500/40 text-[10px] font-bold px-3 py-1.5 rounded-lg transition cursor-pointer flex-shrink-0"
+              >
+                ⏪ Reverter
+              </button>
             </div>
           </div>
-
-          <button
-            onClick={() => setRollbackModalOpen(true)}
-            className="bg-red-950/60 hover:bg-red-900/80 text-red-200 border border-red-500/40 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer flex-shrink-0"
-          >
-            ⏪ Reverter para este Checkpoint
-          </button>
-        </div>
-
-        {/* Terminal de Logs em Tempo Real */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-              <span>Monitor em Tempo Real (Live Stream + EVOLUTION_LOG.md)</span>
-            </span>
-            <span className="text-[10px] text-gray-500 font-mono">Auto-refresh a cada 3s</span>
-          </div>
-
-          <pre
-            ref={logTerminalRef}
-            className="p-4 bg-[#050509] border border-[#1e1e2d] rounded-2xl text-[11px] font-mono text-gray-300 h-64 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed shadow-inner"
-          >
-            {recentLogs}
-          </pre>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* SEÇÃO SECUNDÁRIA: FLUXOS AGENDADOS N8N                                     */}
+      {/* SEÇÃO SECUNDÁRIA: FLUXOS CRON & AUTOMAÇÕES ESPECÍFICAS                     */}
       {/* ========================================================================= */}
-      <h3 className="text-sm font-extrabold text-white mb-4 flex items-center gap-2">
-        <span>⏰</span>
-        <span>Fluxos Cron & Automações Específicas</span>
-      </h3>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+            <span>⏰</span>
+            <span>Fluxos Cron & Automações Específicas</span>
+          </h3>
+          <p className="text-[11px] text-gray-400 mt-0.5">
+            Robôs e tarefas com agendamento temporal. Você pode editá-los diretamente no botão <strong>✏️ Editar</strong> ou solicitar alterações no <strong>Chat Global</strong>.
+          </p>
+        </div>
 
+        <button
+          onClick={openCreateModal}
+          className="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+        >
+          <span>➕</span>
+          <span>Nova Automação</span>
+        </button>
+      </div>
+
+      {/* Banner de Ajuda e Integração com Chat */}
+      <div className="bg-[#0b0b14] border border-indigo-500/20 rounded-2xl p-3.5 mb-4 text-[11px] text-gray-300 flex items-start gap-3">
+        <span className="text-base">💡</span>
+        <div className="flex-1 leading-relaxed">
+          <strong>Como alterar ou criar automações?</strong>
+          <span className="text-gray-400 block mt-0.5">
+            • <strong>Pela Interface:</strong> Clique no botão <code>✏️ Editar</code> de qualquer card abaixo para ajustar o horário Cron, nome ou ação.<br />
+            • <strong>Pelo Chat Global:</strong> Você pode pedir ao orquestrador (ex: <em>&quot;V0id, mude o radar de editais para rodar de 1 em 1 hora&quot;</em> ou <em>&quot;Crie um robô diário para raspar o HackerNews às 07:00&quot;</em>) que o V0id programa o script e agenda a tarefa diretamente no Nexus DB.
+          </span>
+        </div>
+      </div>
+
+      {/* Lista de Automações */}
       <div className="space-y-3 mb-8">
         {flows.map(flow => (
           <div
@@ -366,19 +471,19 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
             className="bg-[#0a0a14] border border-[#1c1c2a] rounded-2xl p-4 hover:border-indigo-500/40 transition flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
+              <div className="flex items-center gap-3 mb-1 flex-wrap">
                 <span className="text-xs font-bold text-white">{flow.name}</span>
-                <span className={`text-[9px] font-mono font-bold px-2 py-0.2 rounded-full ${
+                <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full ${
                   flow.status === 'ATIVO' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-gray-800 text-gray-400'
                 }`}>
                   {flow.status}
                 </span>
-                <span className="text-[10px] font-mono text-gray-500 bg-[#06060c] px-2 py-0.2 rounded">
+                <span className="text-[10px] font-mono text-gray-400 bg-[#06060c] px-2 py-0.5 rounded border border-[#181824]">
                   {flow.schedule}
                 </span>
               </div>
-              <p className="text-[11px] text-gray-400 mb-1">{flow.action}</p>
-              <div className="flex items-center gap-3 text-[10px] text-gray-500 font-mono">
+              <p className="text-[11px] text-gray-300 mb-1 leading-relaxed">{flow.action}</p>
+              <div className="flex items-center gap-3 text-[10px] text-gray-500 font-mono flex-wrap">
                 <span>Gatilho: <strong className="text-gray-300">{flow.trigger}</strong></span>
                 <span>•</span>
                 <span>Última Execução: <strong className="text-emerald-400">{flow.lastRun}</strong></span>
@@ -389,9 +494,22 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
               <button
                 onClick={() => showToast(`🚀 Disparo manual iniciado para "${flow.name}"!`)}
                 className="text-xs bg-emerald-600/25 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-xl transition font-semibold cursor-pointer"
+                title="Executar imediatamente"
               >
                 ▶️ Disparar
               </button>
+
+              <button
+                onClick={() => {
+                  setEditingFlow({ ...flow });
+                  setIsCreatingNew(false);
+                }}
+                className="text-xs bg-[#141424] hover:bg-[#1f1f35] text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded-xl transition font-semibold cursor-pointer"
+                title="Editar parâmetros e agendamento Cron"
+              >
+                ✏️ Editar
+              </button>
+
               <button
                 onClick={() => toggleFlow(flow.id)}
                 className={`text-xs px-3 py-1.5 rounded-xl border transition font-semibold cursor-pointer ${
@@ -406,6 +524,103 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
           </div>
         ))}
       </div>
+
+      {/* Modal de Edição / Criação de Automação */}
+      {editingFlow && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-[#0e0e18] border border-indigo-500/40 rounded-3xl max-w-lg w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#202035]">
+              <div className="flex items-center gap-2.5 text-indigo-400">
+                <span className="text-xl">{isCreatingNew ? '➕' : '✏️'}</span>
+                <h4 className="text-sm font-extrabold text-white">
+                  {isCreatingNew ? 'Criar Nova Automação' : `Editar: ${editingFlow.name}`}
+                </h4>
+              </div>
+              <button
+                onClick={() => { setEditingFlow(null); setIsCreatingNew(false); }}
+                className="text-gray-400 hover:text-white text-xs cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveFlow} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold text-gray-300 uppercase block mb-1">
+                  Nome da Automação
+                </label>
+                <input
+                  type="text"
+                  value={editingFlow.name}
+                  onChange={e => setEditingFlow({ ...editingFlow, name: e.target.value })}
+                  className="w-full bg-[#06060c] border border-[#222238] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-medium"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-gray-300 uppercase block mb-1">
+                    Gatilho / Horário
+                  </label>
+                  <input
+                    type="text"
+                    value={editingFlow.trigger}
+                    onChange={e => setEditingFlow({ ...editingFlow, trigger: e.target.value })}
+                    className="w-full bg-[#06060c] border border-[#222238] rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-medium"
+                    placeholder="Ex: Diariamente às 09:00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-gray-300 uppercase block mb-1">
+                    Expressão Cron
+                  </label>
+                  <input
+                    type="text"
+                    value={editingFlow.schedule}
+                    onChange={e => setEditingFlow({ ...editingFlow, schedule: e.target.value })}
+                    className="w-full bg-[#06060c] border border-[#222238] rounded-xl px-3 py-2 text-xs text-amber-300 font-mono focus:outline-none focus:border-indigo-500 font-medium"
+                    placeholder="0 9 * * *"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-gray-300 uppercase block mb-1">
+                  Ação / Script / Prompt Executado
+                </label>
+                <textarea
+                  value={editingFlow.action}
+                  onChange={e => setEditingFlow({ ...editingFlow, action: e.target.value })}
+                  rows={3}
+                  className="w-full bg-[#06060c] border border-[#222238] rounded-xl p-3 text-xs text-gray-200 focus:outline-none focus:border-indigo-500 font-mono leading-relaxed"
+                  placeholder="Descreva o que o robô deve fazer ao ser disparado..."
+                  required
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setEditingFlow(null); setIsCreatingNew(false); }}
+                  className="bg-[#141420] hover:bg-[#1e1e2d] text-gray-300 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-5 py-2 rounded-xl transition shadow-lg shadow-indigo-950/60 cursor-pointer"
+                >
+                  Salvar Automação
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Confirmação de Rollback */}
       {rollbackModalOpen && (
