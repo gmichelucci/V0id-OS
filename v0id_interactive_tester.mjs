@@ -6,7 +6,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import WebSocket from 'ws';
 import { SCENES } from './v0id_capture_scenes.mjs';
 
@@ -30,6 +30,12 @@ export class EdgeCDPClient {
       `--remote-debugging-port=${this.port}`,
       '--no-first-run',
       '--no-default-browser-check',
+      '--disable-sync',
+      '--disable-search-engine-choice-screen',
+      '--disable-component-update',
+      '--disable-background-networking',
+      '--disable-default-apps',
+      '--disable-extensions',
       '--disable-gpu',
       '--no-sandbox',
       '--window-size=1366,768',
@@ -39,7 +45,7 @@ export class EdgeCDPClient {
 
     // Aguarda o endpoint do CDP estar disponível
     let ready = false;
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       try {
         const res = await fetch(`http://localhost:${this.port}/json`);
         if (res.ok) {
@@ -47,21 +53,35 @@ export class EdgeCDPClient {
           break;
         }
       } catch {}
-      await new Promise(r => setTimeout(r, 250));
+      await new Promise(r => setTimeout(r, 200));
     }
 
     if (!ready) throw new Error('Não foi possível iniciar o Edge com porta CDP.');
 
     const res = await fetch(`http://localhost:${this.port}/json`);
     const tabs = await res.json();
-    const target = tabs.find(t => t.type === 'page') || tabs[0];
+    const target = tabs.find(t => t.type === 'page' && !t.url.startsWith('edge://')) || tabs.find(t => t.type === 'page') || tabs[0];
+
+    if (!target || !target.webSocketDebuggerUrl) {
+      throw new Error('Nenhuma aba válida encontrada no Edge CDP.');
+    }
 
     return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Timeout de conexão ao WebSocket CDP do Edge.'));
+      }, 8000);
+
       this.ws = new WebSocket(target.webSocketDebuggerUrl);
       this.ws.on('open', async () => {
-        await this.send('Page.enable');
-        await this.send('Runtime.enable');
-        resolve();
+        try {
+          await this.send('Page.enable', {}, 5000);
+          await this.send('Runtime.enable', {}, 5000);
+          clearTimeout(timeout);
+          resolve();
+        } catch (err) {
+          clearTimeout(timeout);
+          reject(err);
+        }
       });
       this.ws.on('message', (data) => {
         try {
@@ -74,36 +94,75 @@ export class EdgeCDPClient {
           }
         } catch {}
       });
-      this.ws.on('error', reject);
+      this.ws.on('error', (err) => {
+        clearTimeout(timeout);
+        reject(err);
+      });
     });
   }
 
-  send(method, params = {}) {
+  send(method, params = {}, timeoutMs = 10000) {
     return new Promise((resolve, reject) => {
       const id = this.msgId++;
-      this.pendingCallbacks.set(id, { resolve, reject });
-      this.ws.send(JSON.stringify({ id, method, params }));
+      let timer = null;
+      if (timeoutMs > 0) {
+        timer = setTimeout(() => {
+          if (this.pendingCallbacks.has(id)) {
+            this.pendingCallbacks.delete(id);
+            reject(new Error(`Timeout ao executar CDP comando [${method}] após ${timeoutMs}ms`));
+          }
+        }, timeoutMs);
+      }
+      this.pendingCallbacks.set(id, {
+        resolve: (val) => {
+          if (timer) clearTimeout(timer);
+          resolve(val);
+        },
+        reject: (err) => {
+          if (timer) clearTimeout(timer);
+          reject(err);
+        }
+      });
+      try {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+          if (timer) clearTimeout(timer);
+          this.pendingCallbacks.delete(id);
+          reject(new Error(`WebSocket CDP fechado ao enviar comando [${method}]`));
+          return;
+        }
+        this.ws.send(JSON.stringify({ id, method, params }));
+      } catch (err) {
+        if (timer) clearTimeout(timer);
+        this.pendingCallbacks.delete(id);
+        reject(err);
+      }
     });
   }
 
   async navigate(url) {
-    await this.send('Page.navigate', { url });
+    try {
+      await this.send('Page.navigate', { url }, 8000);
+    } catch {}
     // Aguarda hidratação do React e carregamento inicial
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 1200));
   }
 
-  async evaluate(expression) {
+  async evaluate(expression, timeoutMs = 8000) {
     const res = await this.send('Runtime.evaluate', {
       expression,
       returnByValue: true,
       awaitPromise: true
-    });
+    }, timeoutMs);
     return res?.result?.value;
   }
 
   async close() {
     try { if (this.ws) this.ws.close(); } catch {}
-    try { if (this.edgeProcess) this.edgeProcess.kill(); } catch {}
+    try {
+      if (this.edgeProcess && this.edgeProcess.pid) {
+        try { execSync(`taskkill /pid ${this.edgeProcess.pid} /T /F`, { stdio: 'ignore', windowsHide: true }); } catch {}
+      }
+    } catch {}
   }
 }
 
@@ -151,15 +210,20 @@ export async function runInteractiveTest(onProgress) {
 
           // Testa cliques em botões seguros (abas, visualizadores, filtros)
           let clicksAttempted = 0;
-          for (const btn of buttons) {
-            const text = (btn.innerText || '').toLowerCase();
-            const isDestructive = /reverter|deletar|excluir|parar|reset|destruir/i.test(text);
-            if (!isDestructive && !btn.disabled && btn.offsetWidth > 0) {
-              try {
-                btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-                clicksAttempted++;
-                if (clicksAttempted >= 4) break; // Testa até 4 botões seguros por cena
-              } catch {}
+          const isHomeLauncher = window.location.pathname === '/' && !window.location.search;
+
+          if (!isHomeLauncher) {
+            for (const btn of buttons) {
+              const text = (btn.innerText || '').toLowerCase();
+              const isDestructive = /reverter|deletar|excluir|parar|reset|destruir/i.test(text);
+              const isNav = /router|link/i.test(btn.className) || btn.closest('a');
+              if (!isDestructive && !isNav && !btn.disabled && btn.offsetWidth > 0) {
+                try {
+                  btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                  clicksAttempted++;
+                  if (clicksAttempted >= 4) break; // Testa até 4 botões seguros por cena
+                } catch {}
+              }
             }
           }
 
@@ -228,6 +292,6 @@ export async function runInteractiveTest(onProgress) {
 }
 
 const isDirect = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename || '');
-if (isDirect || process.argv.includes('--run-now')) {
+if (isDirect) {
   runInteractiveTest().catch(console.error);
 }

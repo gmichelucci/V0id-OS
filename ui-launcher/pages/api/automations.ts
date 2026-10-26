@@ -30,23 +30,25 @@ function isLoopRunning(): { running: boolean; pid?: number } {
 function getRecentLogs(): string {
   let output = '';
 
-  // 1. Streaming ao vivo do executor atual (loop_runner.log)
+  // 1. Histórico consolidado em Markdown (EVOLUTION_LOG.md) no topo
+  if (fs.existsSync(LOG_FILE)) {
+    try {
+      const content = fs.readFileSync(LOG_FILE, 'utf8').trim();
+      if (content) {
+        const lines = content.split('\n');
+        output += `📜 [HISTÓRICO CONSOLIDADO (EVOLUTION_LOG.md)]\n` + lines.slice(-20).join('\n') + `\n\n`;
+      }
+    } catch {}
+  }
+
+  // 2. Streaming ao vivo do executor atual (loop_runner.log) NO FINAL (onde o autoscroll foca!)
   if (fs.existsSync(RUNNER_LOG)) {
     try {
       const runnerContent = fs.readFileSync(RUNNER_LOG, 'utf8').trim();
       if (runnerContent) {
         const lines = runnerContent.split('\n');
-        output += `⚡ [STREAMING AO VIVO DO MOTOR]\n` + lines.slice(-25).join('\n') + `\n\n`;
+        output += `⚡ [STREAMING AO VIVO DO MOTOR EM TEMPO REAL]\n` + lines.slice(-45).join('\n');
       }
-    } catch {}
-  }
-
-  // 2. Histórico consolidado em Markdown (EVOLUTION_LOG.md)
-  if (fs.existsSync(LOG_FILE)) {
-    try {
-      const content = fs.readFileSync(LOG_FILE, 'utf8').trim();
-      const lines = content.split('\n');
-      output += `📜 [HISTÓRICO CONSOLIDADO (EVOLUTION_LOG.md)]\n` + lines.slice(-25).join('\n');
     } catch {}
   }
 
@@ -54,6 +56,11 @@ function getRecentLogs(): string {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Previne qualquer cache HTTP pelo browser ou proxy
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   // 1. GET: Retorna status do loop, logs recentes e checkpoint de segurança
   if (req.method === 'GET') {
     try {

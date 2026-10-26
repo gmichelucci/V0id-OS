@@ -77,7 +77,7 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
   // Carrega status da API de Automações
   const fetchStatus = async () => {
     try {
-      const res = await fetch('/api/automations');
+      const res = await fetch(`/api/automations?t=${Date.now()}`);
       const data = await res.json();
       if (data.success) {
         setIsLoopRunning(data.isRunning);
@@ -91,7 +91,7 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 3000);
+    const interval = setInterval(fetchStatus, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -354,9 +354,18 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
               <span className={`w-2.5 h-2.5 rounded-full ${isLoopRunning ? 'bg-amber-400 animate-ping' : 'bg-gray-600'}`}></span>
-              <span>Monitor em Tempo Real (Live Stream + EVOLUTION_LOG.md)</span>
+              <span>Monitor em Tempo Real (Live Stream)</span>
             </span>
-            <span className="text-[10px] text-gray-500 font-mono">Auto-refresh a cada 3s</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-gray-500 font-mono">Auto-refresh 2s</span>
+              <button
+                onClick={fetchStatus}
+                className="text-[10px] text-gray-400 hover:text-white px-2 py-0.5 rounded bg-white/5 border border-white/10 transition cursor-pointer"
+                title="Forçar atualização dos logs agora"
+              >
+                🔄 Atualizar
+              </button>
+            </div>
           </div>
 
           <pre

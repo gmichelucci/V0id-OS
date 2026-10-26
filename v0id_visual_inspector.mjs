@@ -108,6 +108,6 @@ RECOMENDAÇÃO: (Nenhuma se aprovado, ou indicação da classe CSS/Tailwind a co
 }
 
 const isDirect = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename || '');
-if (isDirect || process.argv.includes('--run-now')) {
+if (isDirect) {
   runVisualInspection().catch(console.error);
 }

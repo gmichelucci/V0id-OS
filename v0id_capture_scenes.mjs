@@ -116,6 +116,6 @@ export async function captureAllScenes(onProgress) {
 }
 
 const isDirect = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename || '');
-if (isDirect || process.argv.includes('--run-now')) {
+if (isDirect) {
   captureAllScenes().catch(console.error);
 }
