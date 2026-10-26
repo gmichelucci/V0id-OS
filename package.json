@@ -8,6 +8,10 @@
   },
   "scripts": {
     "start": "node --no-warnings 01_core_security/v0id-cli/cli.js",
+    "loop": "node v0id_autonomous_evolution_loop.mjs",
+    "loop:scenes": "node v0id_autonomous_evolution_loop.mjs --scenes",
+    "capture": "node v0id_capture_scenes.mjs",
+    "test:suite": "node v0id_self_healing_suite.mjs",
     "test:nexus": "node --no-warnings 03_chat_projects_nexus/nexus-db/nexus.test.js",
     "test:omniroute": "node --no-warnings 01_core_security/omni-router/omni_router.test.js",
     "test:agent": "node --no-warnings 01_core_security/v0id-cli/agent.test.js"

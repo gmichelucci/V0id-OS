@@ -18,7 +18,7 @@ function appendLog(entry) {
   fs.appendFileSync(LOG_FILE, text, 'utf8');
 }
 
-export async function runEvolutionCycle(cycleNumber = 1) {
+export async function runEvolutionCycle(cycleNumber = 1, options = {}) {
   console.log(`\n==================================================`);
   console.log(`🌀 INICIANDO CICLO DE EVOLUÇÃO AUTÔNOMA #${cycleNumber}`);
   console.log(`==================================================`);
@@ -28,7 +28,7 @@ export async function runEvolutionCycle(cycleNumber = 1) {
   // 1. Executa a suíte de testes E2E
   try {
     const testSuiteUrl = pathToFileURL(path.join(V0ID_ROOT, 'v0id_self_healing_suite.mjs')).href;
-    console.log(`[1/4] Executando Suíte de Auditoria 24 Pontos...`);
+    console.log(`[1/5] Executando Suíte de Auditoria 24 Pontos...`);
     const testOut = execSync(`node "${path.join(V0ID_ROOT, 'v0id_self_healing_suite.mjs')}"`, {
       cwd: V0ID_ROOT,
       encoding: 'utf8',
@@ -43,7 +43,7 @@ export async function runEvolutionCycle(cycleNumber = 1) {
 
   // 2. TypeScript Compilation Check
   try {
-    console.log(`[2/4] Verificando Tipagem dos 14 Estúdios...`);
+    console.log(`[2/5] Verificando Tipagem dos 14 Estúdios...`);
     execSync('npx tsc --noEmit', {
       cwd: path.join(V0ID_ROOT, 'ui-launcher'),
       encoding: 'utf8',
@@ -56,9 +56,40 @@ export async function runEvolutionCycle(cycleNumber = 1) {
     cycleReport += `- **TypeScript Check:** Erro -> ${err.message.slice(0, 200)}\n`;
   }
 
-  // 3. Graphify Knowledge Graph Sync
+  // 3. Mapeamento Visual e Atualização de Fotos das Cenas
+  const forceScenes = options.updateScenes || process.argv.includes('--scenes') || process.argv.includes('--with-scenes');
+  let shouldUpdateScenes = forceScenes;
   try {
-    console.log(`[3/4] Sincronizando Grafo de Conhecimento AST (Graphify)...`);
+    if (!shouldUpdateScenes) {
+      const uiStatus = execSync('git status --porcelain ui-launcher', { cwd: V0ID_ROOT, encoding: 'utf8' }).trim();
+      if (uiStatus.length > 0) {
+        shouldUpdateScenes = true;
+      }
+    }
+  } catch (e) {}
+
+  if (shouldUpdateScenes) {
+    try {
+      console.log(`[3/5] Atualizando Fotos e Mapeamento Visual de Todas as Cenas...`);
+      execSync(`node "${path.join(V0ID_ROOT, 'v0id_capture_scenes.mjs')}"`, {
+        cwd: V0ID_ROOT,
+        encoding: 'utf8',
+        timeout: 120000
+      });
+      console.log(`  📸 Todas as 15 cenas fotografadas e atualizadas em docs/scenes/!`);
+      cycleReport += `- **Visual Scenes:** 15 fotos de cenas atualizadas em docs/scenes/\n`;
+    } catch (err) {
+      console.warn(`  ⚠️ Falha ao atualizar fotos: ${err.message.slice(0, 100)}`);
+      cycleReport += `- **Visual Scenes:** Falha ao capturar -> ${err.message.slice(0, 100)}\n`;
+    }
+  } else {
+    console.log(`[3/5] Fotos das Cenas: Mantidas (nenhuma alteração visual detectada na UI).`);
+    cycleReport += `- **Visual Scenes:** Inalteradas (sem mudanças pendentes na UI)\n`;
+  }
+
+  // 4. Graphify Knowledge Graph Sync
+  try {
+    console.log(`[4/5] Sincronizando Grafo de Conhecimento AST (Graphify)...`);
     execSync('graphify update .', {
       cwd: V0ID_ROOT,
       encoding: 'utf8',
@@ -70,9 +101,9 @@ export async function runEvolutionCycle(cycleNumber = 1) {
     cycleReport += `- **Graphify Sync:** Falha -> ${err.message.slice(0, 100)}\n`;
   }
 
-  // 4. Git Status e Auto-Sync para o GitHub
+  // 5. Git Status e Auto-Sync para o GitHub
   try {
-    console.log(`[4/4] Verificando Alterações para Sincronização GitHub...`);
+    console.log(`[5/5] Verificando Alterações para Sincronização GitHub...`);
     const gitStatus = execSync('git status --porcelain', { cwd: V0ID_ROOT, encoding: 'utf8' }).trim();
     if (gitStatus) {
       console.log(`  📦 Detectadas alterações locais. Realizando commit e push...`);
