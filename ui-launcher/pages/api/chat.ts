@@ -8,19 +8,55 @@ const dynamicImport = new Function('specifier', 'return import(specifier)');
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const nexusPath = pathToFileURL(path.resolve(process.cwd(), '../03_chat_projects_nexus/nexus-db/nexus.js')).href;
 
-  // 1. GET: Retorna o histórico persistido de mensagens do projeto ativo
+  // 1. GET: Retorna o histórico persistido de mensagens ou lista de sessões
   if (req.method === 'GET') {
     try {
       const { nexus } = await dynamicImport(nexusPath);
       const proj = (req.query.project as string) || 'global';
-      const history = nexus.getChatMessages(proj, 100);
+      const action = req.query.action as string;
+
+      // Retorna sessões existentes para o projeto
+      if (action === 'sessions') {
+        const sessions = nexus.getSessions(proj);
+        return res.status(200).json({ success: true, sessions });
+      }
+
+      const sessionId = (req.query.session_id as string) || null;
+      const history = nexus.getChatMessages(proj, sessionId, 100);
       return res.status(200).json({ success: true, messages: history });
     } catch (err: any) {
       return res.status(500).json({ success: false, error: err.message });
     }
   }
 
-  // 2. POST (action=gold): Marca a última resposta como [APPROVED_GOLD] no SQLite
+  // 2. DELETE: Exclui uma sessão de conversa
+  if (req.method === 'DELETE') {
+    try {
+      const { nexus } = await dynamicImport(nexusPath);
+      const sessionId = (req.query.session_id as string) || (req.body && req.body.session_id);
+      if (sessionId) {
+        nexus.deleteSession(sessionId);
+        return res.status(200).json({ success: true, deleted: sessionId });
+      }
+      return res.status(400).json({ success: false, error: 'session_id obrigatório' });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // 3. POST (action=new_session): Cria uma nova sessão explicitamente
+  if (req.method === 'POST' && req.query.action === 'new_session') {
+    try {
+      const { nexus } = await dynamicImport(nexusPath);
+      const { project = 'global', title = 'Nova Conversa' } = req.body;
+      const session = nexus.createSession(project, title);
+      return res.status(200).json({ success: true, session });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // 4. POST (action=gold): Marca a última resposta como [APPROVED_GOLD] no SQLite
   if (req.method === 'POST' && req.query.action === 'gold') {
     try {
       const { nexus } = await dynamicImport(nexusPath);
@@ -34,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
-  const { message, project, toggles } = req.body;
+  const { message, project, toggles, session_id, attachments } = req.body;
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'Mensagem vazia' });
   }
@@ -50,6 +86,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { nexus } = await dynamicImport(nexusPath);
 
     const activeProj = project || 'global';
+    const activeSession = session_id || 'default';
     const agent = new V0idAgent({ activeProject: activeProj });
 
     // Monta o System Prompt de acordo com os Toggles ativos em tempo real
@@ -65,12 +102,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       systemPrompt += ' Adote a postura Ponytail (engenharia sênior pragmática: soluções limpas, menor código necessário, sem abstrações inúteis).';
     }
 
-    // Salva a mensagem do usuário no banco SQLite persistente
+    // Processa arquivos anexados e anexa ao prompt do usuário
+    let fullUserPrompt = message;
+    const toolResultsFromAttachments: any[] = [];
+    if (Array.isArray(attachments) && attachments.length > 0) {
+      const fileBlocks = attachments.map((att: any) => {
+        toolResultsFromAttachments.push({
+          tool: 'attach_file',
+          args: { name: att.name, size: att.size || (att.content?.length || 0) },
+          result: `Arquivo anexado: ${att.name}`
+        });
+        return `\n\n--- [ARQUIVO ANEXADO: ${att.name}] ---\n${att.content || ''}\n----------------------------------`;
+      }).join('');
+      fullUserPrompt = `${message}${fileBlocks}`;
+    }
+
+    // Carrega histórico prévio desta sessão para prover memória multi-turn real
+    const previousHistory = nexus.getChatMessages(activeProj, activeSession, 12);
+
+    // Salva a mensagem do usuário no banco SQLite persistente vinculada à sessão
     try {
       nexus.saveChatMessage({
         projectId: activeProj,
+        sessionId: activeSession,
         sender: 'Você',
-        text: message
+        text: message,
+        toolResults: toolResultsFromAttachments
       });
     } catch (e: any) {
       console.warn('Erro ao persistir mensagem do usuário:', e.message);
@@ -88,6 +145,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         nexus.saveChatMessage({
           projectId: activeProj,
+          sessionId: activeSession,
           sender: 'V0id Autopilot Agent',
           text: autopilotReply,
           provider: 'V0id Autopilot Agent',
@@ -110,10 +168,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       activeProject: activeProj
     });
 
-    const response = await router.route(message, {
+    const response = await router.route(fullUserPrompt, {
       forceComplex: true,
       tools: TOOL_DEFINITIONS,
       systemPrompt,
+      history: previousHistory,
       uncensored: toggles?.uncensoredMode,
       forceAgy: toggles?.forceAgy
     });
@@ -175,10 +234,11 @@ Não invoque novas ferramentas. Responda em texto claro, técnico e executivo co
       }
     }
 
-    // Salva a resposta do assistente no banco SQLite persistente
+    // Salva a resposta do assistente no banco SQLite persistente vinculada à sessão
     try {
       nexus.saveChatMessage({
         projectId: activeProj,
+        sessionId: activeSession,
         sender: response.providerUsed || 'OmniRoute Core',
         text,
         provider: response.providerUsed || 'OmniRoute Core',
@@ -199,6 +259,7 @@ Não invoque novas ferramentas. Responda em texto claro, técnico e executivo co
       toolResults
     });
   } catch (err: any) {
+    console.error('CHAT API ERROR:', err.stack || err);
     return res.status(500).json({
       success: false,
       error: err.message,

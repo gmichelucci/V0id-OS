@@ -109,7 +109,7 @@ export default function StudioView({
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#020204] text-gray-200 overflow-hidden font-sans select-none animate-fade-in">
+    <div className="h-screen w-screen flex flex-col bg-[#020204] text-gray-200 overflow-hidden font-sans select-text animate-fade-in">
       {/* Header Global com Ícone Oficial do Buraco Negro V0id */}
       <header className="h-14 border-b border-[#181824] px-6 flex items-center justify-between bg-[#07070e] flex-shrink-0 z-20">
         <div className="flex items-center gap-4">

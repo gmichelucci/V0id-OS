@@ -91,8 +91,21 @@ export async function callGemini(apiKey, model, systemPrompt, userPrompt, option
   const m = model || 'gemini-3.5-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
 
+  const contents = [];
+  if (Array.isArray(options.history) && options.history.length > 0) {
+    for (const h of options.history) {
+      if (!h.text || !h.text.trim()) continue;
+      const isUser = h.sender === 'Você' || h.role === 'user';
+      contents.push({
+        role: isUser ? 'user' : 'model',
+        parts: [{ text: h.text }]
+      });
+    }
+  }
+  contents.push({ role: 'user', parts: [{ text: userPrompt }] });
+
   const body = {
-    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+    contents,
     systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
     generationConfig: { temperature: 0.2 }
   };
@@ -148,6 +161,17 @@ export async function callOpenAICompatible(providerName, baseUrl, apiKey, model,
   const url = baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`;
   const messages = [];
   if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+
+  if (Array.isArray(options.history) && options.history.length > 0) {
+    for (const h of options.history) {
+      if (!h.text || !h.text.trim()) continue;
+      const isUser = h.sender === 'Você' || h.role === 'user';
+      messages.push({
+        role: isUser ? 'user' : 'assistant',
+        content: h.text
+      });
+    }
+  }
   messages.push({ role: 'user', content: userPrompt });
 
   const payload = {

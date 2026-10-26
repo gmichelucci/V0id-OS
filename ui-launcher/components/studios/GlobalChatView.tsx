@@ -8,6 +8,36 @@ interface PipelineStep {
   status: 'PENDENTE' | 'EXECUTANDO' | 'CONCLUÍDO';
 }
 
+interface AttachedFile {
+  name: string;
+  size: number;
+  content: string;
+  type: string;
+}
+
+interface ChatSession {
+  id: string;
+  project_id: string;
+  title: string;
+  updated_at?: string;
+  created_at?: string;
+}
+
+interface MessageItem {
+  id?: number;
+  sender: string;
+  text: string;
+  time: string;
+  isGold?: boolean;
+  toolResults?: any[];
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function formatToolBadge(t: any): string {
   const toolName = t.tool || 'ferramenta';
   if (toolName === 'read_file') {
@@ -27,7 +57,47 @@ function formatToolBadge(t: any): string {
     const dir = t.args?.dirPath || '.';
     return `• [list_dir] -> ${dir} (Diretório inspecionado)`;
   }
+  if (toolName === 'attach_file') {
+    return `• [anexo] -> ${t.args?.name || 'arquivo'} (${formatFileSize(t.args?.size || 0)})`;
+  }
   return `• [${toolName}] -> Concluído com sucesso`;
+}
+
+function FormattedContent({ text, onCopyCode }: { text: string; onCopyCode: (code: string) => void }) {
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  return (
+    <div className="space-y-2 select-text leading-relaxed">
+      {parts.map((part, idx) => {
+        if (part.startsWith('```') && part.endsWith('```')) {
+          const firstLineEnd = part.indexOf('\n');
+          const lang = part.slice(3, firstLineEnd > 0 ? firstLineEnd : 3).trim() || 'código';
+          const code = firstLineEnd > 0 ? part.slice(firstLineEnd + 1, -3) : part.slice(3, -3);
+          return (
+            <div key={idx} className="my-2.5 rounded-xl overflow-hidden border border-[#222238] bg-[#070710]">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-[#0d0d18] border-b border-[#222238] text-[10px] text-gray-400 font-mono">
+                <span className="uppercase tracking-wider font-bold text-amber-400">{lang}</span>
+                <button
+                  type="button"
+                  onClick={() => onCopyCode(code)}
+                  className="hover:text-white flex items-center gap-1 bg-white/[0.06] hover:bg-white/[0.12] px-2 py-0.5 rounded transition cursor-pointer"
+                >
+                  📋 Copiar Código
+                </button>
+              </div>
+              <pre className="p-3.5 text-[11px] font-mono text-gray-200 overflow-x-auto whitespace-pre leading-relaxed">
+                <code>{code}</code>
+              </pre>
+            </div>
+          );
+        }
+        return (
+          <div key={idx} className="whitespace-pre-wrap select-text break-words">
+            {part}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function GlobalChatView({
@@ -39,18 +109,21 @@ export default function GlobalChatView({
 }) {
   const projectSlug = projectId || (activeProject || 'global').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'global';
 
-  const [messages, setMessages] = useState<{ sender: string; text: string; time: string; isGold?: boolean }[]>([
-    {
-      sender: 'V0id Core (Orquestrador Supremo)',
-      text: `Terminal Orquestrador Supremo Ativo [${activeProject}].\nCapacidade de acionar pipelines automatizados em sequência através de todos os estúdios (Code, OmniMedia, Game, Research).`,
-      time: 'Agora'
-    }
-  ]);
+  // Sessões
+  const [sessionId, setSessionId] = useState<string>('default');
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
+
+  const [messages, setMessages] = useState<MessageItem[]>([]);
   const [inputVal, setInputVal] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
   const [superPromptModal, setSuperPromptModal] = useState<{ raw: string; compiled: string } | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Anexos de Arquivos
+  const [attachments, setAttachments] = useState<AttachedFile[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Multi-Studio Pipeline State
   const [activePipeline, setActivePipeline] = useState<{
@@ -60,6 +133,8 @@ export default function GlobalChatView({
 
   const wsRef = useRef<WebSocket | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // 9 Toggles Vivos
   const [toggles, setToggles] = useState({
@@ -76,7 +151,12 @@ export default function GlobalChatView({
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 3000);
+    setTimeout(() => setToastMsg(null), 3200);
+  };
+
+  const copyToClipboard = (text: string, label: string = 'Texto copiado!') => {
+    navigator.clipboard.writeText(text);
+    showToast(`✅ ${label}`);
   };
 
   const toggleSwitch = (key: keyof typeof toggles) => {
@@ -85,198 +165,246 @@ export default function GlobalChatView({
     showToast(`Toggle [${key}] alternado para ${updated[key] ? 'ATIVO' : 'INATIVO'}.`);
   };
 
-  // Histórico Persistente via SQLite Nexus DB
-  useEffect(() => {
-    let isCancelled = false;
-    const loadPersistedHistory = async () => {
-      try {
-        const res = await fetch(`/api/chat?project=${projectSlug}`);
-        const data = await res.json();
-        if (!isCancelled && data.success && Array.isArray(data.messages) && data.messages.length > 0) {
-          setMessages(data.messages.map((m: any) => {
-            let fullText = m.text;
-            if (m.tool_results && m.tool_results.length > 0) {
-              fullText += '\n\n🔧 Ações executadas no disco rígido:\n' +
-                m.tool_results.map((t: any) => formatToolBadge(t)).join('\n');
-            }
-            return {
-              sender: m.sender,
-              text: fullText,
-              time: m.created_at ? new Date(m.created_at).toLocaleTimeString() : 'Agora',
-              isGold: !!m.is_gold
-            };
-          }));
-        } else if (!isCancelled) {
-          setMessages([
-            {
-              sender: 'V0id Core (Orquestrador Supremo)',
-              text: `Terminal Orquestrador Supremo Ativo [${activeProject}].\nCapacidade de acionar pipelines automatizados em sequência através de todos os estúdios (Code, OmniMedia, Game, Research).`,
-              time: 'Agora'
-            }
-          ]);
-        }
-      } catch {}
-    };
-    loadPersistedHistory();
-    return () => { isCancelled = true; };
-  }, [projectSlug, activeProject]);
-  useEffect(() => {
-    let ws: WebSocket | null = null;
+  // Carrega Sessões Salvas
+  const loadSessions = async () => {
     try {
-      ws = new WebSocket('ws://localhost:7777');
-      wsRef.current = ws;
-
-      ws.onopen = () => setWsConnected(true);
-      ws.onclose = () => setWsConnected(false);
-      ws.onerror = () => setWsConnected(false);
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'chat_response') {
-            setMessages(prev => [...prev, {
-              sender: data.provider || 'OmniRoute Core',
-              text: data.text || data.message || '',
-              time: new Date().toLocaleTimeString()
-            }]);
-          }
-        } catch {}
-      };
+      const res = await fetch(`/api/chat?project=${projectSlug}&action=sessions`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.sessions)) {
+        setSessions(data.sessions);
+      }
     } catch {}
+  };
 
-    return () => {
-      if (ws) ws.close();
-    };
-  }, []);
+  // Carrega Histórico Persistente da Sessão Ativa
+  const loadPersistedHistory = async (targetSession: string) => {
+    try {
+      const res = await fetch(`/api/chat?project=${projectSlug}&session_id=${targetSession}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
+        setMessages(data.messages.map((m: any) => {
+          let fullText = m.text;
+          if (m.tool_results && m.tool_results.length > 0) {
+            fullText += '\n\n🔧 Ações executadas no disco rígido:\n' +
+              m.tool_results.map((t: any) => formatToolBadge(t)).join('\n');
+          }
+          return {
+            id: m.id,
+            sender: m.sender,
+            text: fullText,
+            time: m.created_at ? new Date(m.created_at).toLocaleTimeString() : 'Agora',
+            isGold: !!m.is_gold,
+            toolResults: m.tool_results
+          };
+        }));
+      } else {
+        setMessages([
+          {
+            sender: 'V0id Core (Orquestrador Supremo)',
+            text: `Terminal Orquestrador Supremo Ativo [${activeProject}].\nCapacidade de acionar pipelines automatizados em sequência através de todos os estúdios (Code, OmniMedia, Game, Research) com memória multi-turn persistente.`,
+            time: 'Agora'
+          }
+        ]);
+      }
+    } catch {
+      setMessages([
+        {
+          sender: 'V0id Core',
+          text: `Conversa inicializada no projeto [${activeProject}].`,
+          time: 'Agora'
+        }
+      ]);
+    }
+  };
 
+  useEffect(() => {
+    loadSessions();
+    loadPersistedHistory(sessionId);
+  }, [projectSlug, sessionId]);
+
+  // Iniciar Nova Conversa
+  const startNewConversation = async () => {
+    const newId = `session_${Date.now()}`;
+    setSessionId(newId);
+    setAttachments([]);
+    setMessages([
+      {
+        sender: 'V0id Core (Orquestrador Supremo)',
+        text: `✨ Nova conversa iniciada no projeto [${activeProject}].\nMemória limpa e pronta para novo objetivo. Envie mensagens ou anexe arquivos abaixo.`,
+        time: new Date().toLocaleTimeString()
+      }
+    ]);
+    setSessionsOpen(false);
+    showToast('✨ Nova conversa iniciada!');
+    await loadSessions();
+  };
+
+  // Excluir Sessão
+  const handleDeleteSession = async (sId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await fetch(`/api/chat?session_id=${sId}`, { method: 'DELETE' });
+      showToast('🗑️ Sessão excluída!');
+      if (sessionId === sId) {
+        startNewConversation();
+      } else {
+        loadSessions();
+      }
+    } catch {}
+  };
+
+  // Upload e Leitura de Arquivos Anexados
+  const handleFiles = (files: FileList | File[]) => {
+    const newAttachments: AttachedFile[] = [];
+    const fileList = Array.from(files);
+
+    fileList.forEach(file => {
+      const reader = new FileReader();
+      const isText = file.type.startsWith('text/') ||
+        /\.(txt|ts|tsx|js|jsx|json|md|py|css|html|yml|yaml|sql|sh|bat|spec)$/i.test(file.name);
+
+      if (isText) {
+        reader.onload = (e) => {
+          const content = e.target?.result as string || '';
+          setAttachments(prev => [...prev, {
+            name: file.name,
+            size: file.size,
+            content,
+            type: file.type || 'text/plain'
+          }]);
+        };
+        reader.readAsText(file);
+      } else {
+        // Se for imagem ou binário
+        reader.onload = (e) => {
+          const content = e.target?.result as string || '';
+          setAttachments(prev => [...prev, {
+            name: file.name,
+            size: file.size,
+            content,
+            type: file.type || 'application/octet-stream'
+          }]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    showToast(`📎 ${fileList.length} arquivo(s) preparado(s) para envio!`);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Editar Mensagem Anterior do Usuário
+  const handleEditMessage = (text: string) => {
+    setInputVal(text);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+    showToast('✏️ Mensagem carregada no editor para ajuste!');
+  };
+
+  // Regenerar Resposta
+  const handleRegenerate = async () => {
+    const lastUserMsg = [...messages].reverse().find(m => m.sender.includes('Você'));
+    if (lastUserMsg) {
+      setInputVal(lastUserMsg.text);
+      await sendMessage(lastUserMsg.text);
+    }
+  };
+
+  // Scroll automático para a última mensagem
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
   }, [messages, isThinking, activePipeline]);
 
-  // Ctrl+V Paste Listener for Screenshots
-  useEffect(() => {
-    const handlePaste = async (e: ClipboardEvent) => {
-      const activeEl = document.activeElement;
-      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-        return;
-      }
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const blob = items[i].getAsFile();
-          if (!blob) continue;
-
-          const reader = new FileReader();
-          reader.onload = async () => {
-            const filename = `screenshot_${Date.now()}.png`;
-            setMessages(prev => [...prev, {
-              sender: 'Você (Imagem)',
-              text: `[🖼️ Imagem colada: ${filename}]`,
-              time: new Date().toLocaleTimeString()
-            }]);
-            showToast(`Imagem capturada do clipboard e registrada no projeto!`);
-          };
-          reader.readAsDataURL(blob);
-          break;
-        }
-      }
-    };
-
-    window.addEventListener('paste', handlePaste);
-    return () => window.removeEventListener('paste', handlePaste);
-  }, []);
-
-  // Disparo do Pipeline Multi-Estúdio para Criação de Jogos
-  const runGamePipeline = () => {
-    const pipeline = {
-      name: 'Pipeline Multi-Estúdio: Criação Autônoma de Jogo',
-      steps: [
-        { id: 'step-1', studio: 'Code Studio', action: 'Gerando arquitetura de classes e script de física 60fps', status: 'EXECUTANDO' as const },
-        { id: 'step-2', studio: 'OmniMedia Studio', action: 'Forjando sprites 3D com TRELLIS e trilha sonora com MusicFX', status: 'PENDENTE' as const },
-        { id: 'step-3', studio: 'Game Studio', action: 'Montando hierarquia de cena, colisores e abrindo Viewport', status: 'PENDENTE' as const }
-      ]
-    };
-    setActivePipeline(pipeline);
-    showToast('🚀 Pipeline Multi-Estúdio iniciado pelo Orquestrador Supremo!');
-
-    // Simulação sequencial das etapas reais gravando arquivos
-    setTimeout(() => {
-      setActivePipeline(prev => prev ? {
-        ...prev,
-        steps: prev.steps.map((s, idx) => idx === 0 ? { ...s, status: 'CONCLUÍDO' } : idx === 1 ? { ...s, status: 'EXECUTANDO' } : s)
-      } : null);
-
-      setTimeout(() => {
-        setActivePipeline(prev => prev ? {
-          ...prev,
-          steps: prev.steps.map((s, idx) => idx <= 1 ? { ...s, status: 'CONCLUÍDO' } : { ...s, status: 'EXECUTANDO' })
-        } : null);
-
-        setTimeout(() => {
-          setActivePipeline(prev => prev ? {
-            ...prev,
-            steps: prev.steps.map(s => ({ ...s, status: 'CONCLUÍDO' }))
-          } : null);
-
-          setMessages(prev => [...prev, {
-            sender: 'Orquestrador Supremo (OmniRoute 120B)',
-            text: `✅ [PIPELINE CONCLUÍDO COM SUCESSO]\n1. Código gravado em src/game.js\n2. Ativos visuais e áudios salvos em assets/\n3. Hierarquia montada na Game Studio Engine pronta para playtest!`,
-            time: new Date().toLocaleTimeString()
-          }]);
-          showToast('Jogo forjado com sucesso nos 3 estúdios!');
-        }, 1800);
-      }, 1800);
-    }, 1800);
+  // Drag and drop listeners
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
   };
 
-  const sendMessage = async () => {
-    if (!inputVal.trim() || isThinking) return;
-    const userMsg = inputVal;
-    setInputVal('');
-    setMessages(prev => [...prev, { sender: 'Você', text: userMsg, time: new Date().toLocaleTimeString() }]);
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
 
-    // Detecta pedidos complexos para disparar pipeline visual
-    if (userMsg.toLowerCase().includes('crie um jogo') || userMsg.toLowerCase().includes('criar jogo')) {
-      runGamePipeline();
-      return;
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  // Enviar Mensagem
+  const sendMessage = async (overrideMsg?: string) => {
+    const textToSend = overrideMsg || inputVal;
+    if ((!textToSend.trim() && attachments.length === 0) || isThinking) return;
+
+    const userMsg = textToSend;
+    const currentAttachments = [...attachments];
+
+    setInputVal('');
+    setAttachments([]);
+
+    // Mostra mensagem imediatamente na UI
+    let displayUserText = userMsg;
+    if (currentAttachments.length > 0) {
+      displayUserText += '\n\n📎 Anexos: ' + currentAttachments.map(a => `${a.name} (${formatFileSize(a.size)})`).join(', ');
     }
 
-    if (wsRef.current && wsConnected) {
-      wsRef.current.send(JSON.stringify({ type: 'chat', message: userMsg, project: activeProject }));
-    } else {
-      setIsThinking(true);
-      try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: userMsg, project: activeProject, toggles })
-        });
-        const data = await res.json();
-        if (data.success) {
-          let reply = data.text;
-          if (data.toolResults && data.toolResults.length > 0) {
-            reply += '\n\n🔧 Ações executadas no disco rígido:\n' +
-              data.toolResults.map((t: any) => formatToolBadge(t)).join('\n');
-          }
-          setMessages(prev => [...prev, {
-            sender: `${data.provider} (${data.tier || 'Direct'})`,
-            text: reply,
-            time: new Date().toLocaleTimeString()
-          }]);
+    setMessages(prev => [...prev, {
+      sender: 'Você',
+      text: displayUserText,
+      time: new Date().toLocaleTimeString()
+    }]);
+
+    setIsThinking(true);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMsg,
+          project: activeProject,
+          session_id: sessionId,
+          toggles,
+          attachments: currentAttachments
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        let reply = data.text;
+        if (data.toolResults && data.toolResults.length > 0) {
+          reply += '\n\n🔧 Ações executadas no disco rígido:\n' +
+            data.toolResults.map((t: any) => formatToolBadge(t)).join('\n');
         }
-      } catch {
+        setMessages(prev => [...prev, {
+          sender: `${data.provider} (${data.tier || 'Direct'})`,
+          text: reply,
+          time: new Date().toLocaleTimeString(),
+          toolResults: data.toolResults
+        }]);
+        loadSessions(); // Atualiza títulos de sessão
+      } else {
         setMessages(prev => [...prev, {
           sender: 'OmniRoute Error',
-          text: 'Falha na resposta do modelo.',
+          text: `Erro na resposta: ${data.error || 'Falha de comunicação'}`,
           time: new Date().toLocaleTimeString()
         }]);
-      } finally {
-        setIsThinking(false);
       }
+    } catch (err: any) {
+      setMessages(prev => [...prev, {
+        sender: 'OmniRoute Error',
+        text: `Falha na requisição: ${err.message}`,
+        time: new Date().toLocaleTimeString()
+      }]);
+    } finally {
+      setIsThinking(false);
     }
   };
 
@@ -298,17 +426,31 @@ export default function GlobalChatView({
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden bg-[#030306]">
+    <div
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className="flex-1 flex overflow-hidden bg-[#030306] select-text relative"
+    >
+      {/* Overlay de Drag and Drop */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 bg-amber-950/80 backdrop-blur-sm border-2 border-dashed border-amber-400 flex flex-col items-center justify-center pointer-events-none animate-fade-in">
+          <span className="text-4xl mb-2">📂</span>
+          <p className="text-base font-extrabold text-white">Solte os arquivos para anexar ao V0id OS</p>
+          <p className="text-xs text-amber-300">Arquivos de código, textos ou imagens serão incluídos no contexto</p>
+        </div>
+      )}
+
       {toastMsg && (
         <div className="fixed top-4 right-4 z-50 bg-amber-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-2xl border border-amber-400/40 animate-fade-in">
           {toastMsg}
         </div>
       )}
 
-      {/* Área Central: Mensagens + Barra do Pipeline + Input */}
+      {/* Área Central: Chat */}
       <div className="flex-1 flex flex-col min-w-0 bg-[#040409] overflow-hidden">
-        {/* Top Action Bar */}
-        <div className="h-14 border-b border-[#181824] px-6 flex items-center justify-between bg-[#07070e] flex-shrink-0">
+        {/* Top Header Bar Antigravity-Grade */}
+        <div className="h-14 border-b border-[#181824] px-6 flex items-center justify-between bg-[#07070e] flex-shrink-0 z-10">
           <div className="flex items-center gap-3">
             <BlackHoleIcon className="w-5 h-5 text-amber-400" />
             <span className="text-sm font-extrabold text-white">Chat Global — Orquestrador Supremo</span>
@@ -318,93 +460,91 @@ export default function GlobalChatView({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Botão + Nova Conversa */}
             <button
-              onClick={runGamePipeline}
-              className="text-xs bg-amber-600 hover:bg-amber-500 text-white font-bold px-3.5 py-1.5 rounded-xl transition shadow-lg shadow-amber-950/40 flex items-center gap-1.5"
+              onClick={startNewConversation}
+              className="text-xs bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold px-3.5 py-1.5 rounded-xl transition shadow-lg shadow-amber-950/40 flex items-center gap-1.5 cursor-pointer"
             >
-              <span>🚀</span>
-              <span>Disparar Pipeline Jogo</span>
+              <span>+</span>
+              <span>Nova Conversa</span>
             </button>
 
-            <button
-              onClick={() => {
-                const last = messages[messages.length - 1]?.text || 'Crie um jogo';
-                setSuperPromptModal({
-                  raw: last,
-                  compiled: `[V0ID AUTO-COMPILED SUPER-PROMPT | MULTI-STUDIO ORCHESTRATOR]
-PROJETO ATIVO: ${activeProject}
-DIRETRIZ: Orquestrar Code Studio, OmniMedia Studio e Game Studio em sequência.
-REGRAS SOUL.MD: Economia extrema de tokens. Anti-Ghost Write obrigatório.
-OBJETIVO:
-${last}
-DIRETRIZ DE SAÍDA: Responda acionando ferramentas nativas de criação de arquivos e pipelines.`
-                });
-              }}
-              className="text-xs bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 px-3 py-1.5 rounded-xl transition"
-            >
-              👁️ Ver Super-Prompt
-            </button>
+            {/* Menu de Sessões / Histórico */}
+            <div className="relative">
+              <button
+                onClick={() => setSessionsOpen(!sessionsOpen)}
+                className="text-xs bg-[#121220] hover:bg-[#1a1a2e] text-gray-200 border border-[#232338] px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>📂</span>
+                <span>Conversas ({sessions.length})</span>
+              </button>
+
+              {sessionsOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-[#0c0c16] border border-[#26263a] rounded-2xl shadow-2xl p-3 z-50 animate-fade-in max-h-80 overflow-y-auto">
+                  <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 flex items-center justify-between">
+                    <span>Sessões Anteriores</span>
+                    <button
+                      onClick={() => setSessionsOpen(false)}
+                      className="text-gray-500 hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {sessions.length === 0 ? (
+                    <p className="text-xs text-gray-500 px-1 py-2">Nenhuma conversa salva ainda.</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {sessions.map(s => (
+                        <div
+                          key={s.id}
+                          onClick={() => {
+                            setSessionId(s.id);
+                            setSessionsOpen(false);
+                            showToast(`Sessão carregada: ${s.title}`);
+                          }}
+                          className={`p-2 rounded-xl text-xs flex items-center justify-between cursor-pointer transition ${
+                            sessionId === s.id
+                              ? 'bg-amber-950/40 border border-amber-500/50 text-amber-200'
+                              : 'bg-[#080810] hover:bg-[#141422] text-gray-300 border border-transparent'
+                          }`}
+                        >
+                          <span className="truncate flex-1 font-medium mr-2">{s.title || 'Conversa'}</span>
+                          <button
+                            onClick={(e) => handleDeleteSession(s.id, e)}
+                            title="Excluir sessão"
+                            className="text-gray-500 hover:text-red-400 text-xs px-1"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <button
               onClick={markLastGold}
-              className="text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-xl transition"
+              title="Aprovar resposta como padrão GOLD"
+              className="text-xs bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl transition cursor-pointer"
             >
               ⭐ [GOLD]
             </button>
           </div>
         </div>
 
-        {/* BARRA VISUAL DE PROGRESSO DO PIPELINE MULTI-ESTÚDIO */}
-        {activePipeline && (
-          <div className="bg-[#0a0a16] border-b border-[#1e1e30] p-4 flex flex-col gap-2 animate-fade-in flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-400 flex items-center gap-2">
-                <span>⚡ {activePipeline.name}</span>
-              </span>
-              <button
-                onClick={() => setActivePipeline(null)}
-                className="text-xs text-gray-400 hover:text-white"
-              >
-                ✕ Fechar
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-1">
-              {activePipeline.steps.map((st, idx) => (
-                <div
-                  key={st.id}
-                  className={`p-3 rounded-xl border text-xs transition ${
-                    st.status === 'EXECUTANDO'
-                      ? 'bg-amber-950/40 border-amber-500/60 animate-pulse'
-                      : st.status === 'CONCLUÍDO'
-                      ? 'bg-emerald-950/40 border-emerald-500/50'
-                      : 'bg-[#080810] border-[#181824] opacity-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-white">Etapa {idx + 1}: {st.studio}</span>
-                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                      st.status === 'CONCLUÍDO' ? 'bg-emerald-600 text-white' :
-                      st.status === 'EXECUTANDO' ? 'bg-amber-500 text-black' : 'bg-gray-800 text-gray-400'
-                    }`}>
-                      {st.status}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-gray-300 leading-snug">{st.action}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Mensagens com scroll */}
-        <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
+        {/* Mensagens com scroll e suporte completo a seleção de texto */}
+        <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-6 space-y-5 select-text">
           {messages.map((m, idx) => {
             const isUser = m.sender.includes('Você');
+            const isLastAssistant = !isUser && idx === messages.length - 1;
+
             return (
-              <div key={idx} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-                <div className="text-[10px] text-gray-500 mb-1 flex items-center gap-2">
-                  <span className="font-bold">{m.sender}</span>
+              <div key={idx} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} group select-text`}>
+                {/* Header da Mensagem com Ações Rápidas */}
+                <div className="text-[10px] text-gray-500 mb-1 flex items-center gap-2 select-none">
+                  <span className="font-bold text-gray-400">{m.sender}</span>
                   <span>•</span>
                   <span>{m.time}</span>
                   {m.isGold && (
@@ -412,15 +552,49 @@ DIRETRIZ DE SAÍDA: Responda acionando ferramentas nativas de criação de arqui
                       ⭐ [APPROVED_GOLD]
                     </span>
                   )}
+
+                  {/* Ações da Mensagem: Copiar & Editar */}
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 ml-2">
+                    <button
+                      onClick={() => copyToClipboard(m.text, 'Mensagem copiada!')}
+                      className="text-[10px] text-gray-400 hover:text-amber-300 px-1 py-0.5 rounded hover:bg-white/[0.05] transition cursor-pointer"
+                      title="Copiar mensagem"
+                    >
+                      📋 Copiar
+                    </button>
+                    {isUser && (
+                      <button
+                        onClick={() => handleEditMessage(m.text)}
+                        className="text-[10px] text-gray-400 hover:text-amber-300 px-1 py-0.5 rounded hover:bg-white/[0.05] transition cursor-pointer"
+                        title="Editar comando e reenviar"
+                      >
+                        ✏️ Editar
+                      </button>
+                    )}
+                    {isLastAssistant && (
+                      <button
+                        onClick={handleRegenerate}
+                        className="text-[10px] text-gray-400 hover:text-cyan-300 px-1 py-0.5 rounded hover:bg-white/[0.05] transition cursor-pointer"
+                        title="Regenerar resposta"
+                      >
+                        🔄 Regenerar
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className={`max-w-3xl p-4 rounded-2xl text-xs leading-relaxed shadow-lg ${
+
+                {/* Balão de Mensagem Formatada */}
+                <div className={`max-w-3xl p-4 rounded-2xl text-xs leading-relaxed shadow-lg select-text ${
                   isUser
                     ? 'bg-amber-600 text-white rounded-br-none'
                     : m.isGold
-                    ? 'bg-[#15141c] border-2 border-amber-500/60 text-gray-200 rounded-bl-none'
-                    : 'bg-[#0c0c16] border border-[#1e1e2d] text-gray-200 rounded-bl-none'
+                    ? 'bg-[#12121d] border-2 border-amber-500/60 text-gray-200 rounded-bl-none'
+                    : 'bg-[#0a0a14] border border-[#1e1e2d] text-gray-200 rounded-bl-none'
                 }`}>
-                  <pre className="whitespace-pre-wrap font-sans break-words">{m.text}</pre>
+                  <FormattedContent
+                    text={m.text}
+                    onCopyCode={(code) => copyToClipboard(code, 'Trecho de código copiado!')}
+                  />
                 </div>
               </div>
             );
@@ -428,48 +602,109 @@ DIRETRIZ DE SAÍDA: Responda acionando ferramentas nativas de criação de arqui
 
           {isThinking && (
             <div className="flex flex-col items-start animate-pulse">
-              <span className="text-[10px] text-amber-400 font-bold mb-1">OmniRoute (Groq / Gemini / Cerebras) orquestrando...</span>
-              <div className="bg-[#0c0c16] border border-amber-900/50 p-3 rounded-2xl text-xs text-gray-400">
-                Coordenando ferramentas e gravando saídas no disco rígido...
+              <span className="text-[10px] text-amber-400 font-bold mb-1 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                OmniRoute (Groq / Gemini / Cerebras) sintetizando...
+              </span>
+              <div className="bg-[#0a0a14] border border-amber-900/50 p-3.5 rounded-2xl text-xs text-gray-400">
+                Processando memória de conversa, consultando ferramentas e compondo resposta...
               </div>
             </div>
           )}
         </div>
 
-        {/* Input Bar */}
-        <div className="p-3 bg-[#07070e] border-t border-[#181824] flex-shrink-0">
-          <div className="max-w-4xl mx-auto flex items-center gap-3 bg-[#0e0e18] border border-[#202032] rounded-2xl px-4 py-2.5">
-            <input
-              type="text"
-              value={inputVal}
-              onChange={e => setInputVal(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && sendMessage()}
-              placeholder="Orquestre o sistema... (ex: 'Crie um jogo espacial' ou cole prints com Ctrl+V)"
-              className="flex-1 bg-transparent text-xs text-gray-100 outline-none"
-            />
-            <button
-              onClick={sendMessage}
-              disabled={isThinking}
-              className="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition"
-            >
-              Enviar ↵
-            </button>
+        {/* Input Bar Antigravity-Style com Suporte a Anexos */}
+        <div className="p-3.5 bg-[#07070e] border-t border-[#181824] flex-shrink-0">
+          <div className="max-w-4xl mx-auto flex flex-col gap-2">
+            {/* Lista de Chips de Arquivos Anexados */}
+            {attachments.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap pb-1">
+                {attachments.map((att, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-1.5 bg-[#141424] border border-amber-500/30 text-amber-300 text-xs px-2.5 py-1 rounded-xl shadow"
+                  >
+                    <span>📄</span>
+                    <span className="font-mono font-medium max-w-xs truncate">{att.name}</span>
+                    <span className="text-[10px] text-gray-500 font-mono">({formatFileSize(att.size)})</span>
+                    <button
+                      onClick={() => removeAttachment(i)}
+                      className="ml-1 text-gray-400 hover:text-red-400 text-xs cursor-pointer font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Input Principal */}
+            <div className="flex items-end gap-2.5 bg-[#0e0e18] border border-[#202032] focus-within:border-amber-500/60 rounded-2xl p-2.5 transition">
+              {/* Input invisível para seleção de arquivo */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                multiple
+                onChange={(e) => e.target.files && handleFiles(e.target.files)}
+                className="hidden"
+              />
+
+              {/* Botão Anexar 📎 */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Anexar arquivos de código, texto ou imagens"
+                className="p-2 text-gray-400 hover:text-amber-300 hover:bg-white/[0.05] rounded-xl transition cursor-pointer flex-shrink-0"
+              >
+                📎
+              </button>
+
+              {/* Textarea auto-expansível */}
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                value={inputVal}
+                onChange={e => setInputVal(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                placeholder="Pergunte ao V0id, anexe arquivos ou cole prints (Shift+Enter para nova linha)..."
+                className="flex-1 bg-transparent text-xs text-gray-100 outline-none resize-none max-h-32 min-h-[28px] py-1 select-text leading-relaxed font-sans"
+              />
+
+              {/* Botão Enviar */}
+              <button
+                onClick={() => sendMessage()}
+                disabled={isThinking || (!inputVal.trim() && attachments.length === 0)}
+                className={`text-xs font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
+                  isThinking || (!inputVal.trim() && attachments.length === 0)
+                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                    : 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-950/40'
+                }`}
+              >
+                <span>Enviar</span>
+                <span>↵</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Coluna Direita: Toggles Vivos (w-72) */}
+      {/* Coluna Direita: Toggles Vivos */}
       <div className="w-72 border-l border-[#181824] bg-[#05050a] p-4 flex flex-col overflow-y-auto flex-shrink-0">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center justify-between">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center justify-between select-none">
           <span>⚡ Toggles Vivos</span>
           <span className="text-[10px] text-amber-400 font-mono">Real-Time</span>
         </h3>
-        <div className="space-y-2 text-xs flex-1">
+        <div className="space-y-2 text-xs flex-1 select-none">
           {[
             { key: 'promptImprover', label: 'Prompt Improver', desc: 'Refina via Gatekeeper Flash' },
             { key: 'omniRoutePool', label: 'OmniRoute Pool', desc: 'Cerebras + Groq + Gemini' },
             { key: 'forceAgy', label: 'Forçar agy CLI', desc: 'Ponte direta Antigravity CLI' },
-            { key: 'graphify', label: 'Graphify (AST)', desc: '270 nós e 20 comunidades' },
+            { key: 'graphify', label: 'Graphify (AST)', desc: 'Knowledge graph sincronizado' },
             { key: 'ponytail', label: 'Modo Ponytail', desc: 'Menor código que funciona' },
             { key: 'rtkSlim', label: 'RTK Output Slim', desc: 'Comprime saídas longas' },
             { key: 'uncensoredMode', label: 'Modo Sem Censura', desc: 'Rotas Dolphin/Hermes' },
@@ -503,34 +738,6 @@ DIRETRIZ DE SAÍDA: Responda acionando ferramentas nativas de criação de arqui
           })}
         </div>
       </div>
-
-      {/* Modal Super-Prompt */}
-      {superPromptModal && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-fade-in">
-          <div className="bg-[#0a0a14] border border-[#27273c] rounded-2xl max-w-3xl w-full p-6 shadow-2xl flex flex-col max-h-[85vh]">
-            <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-              <BlackHoleIcon className="w-5 h-5 text-amber-400" />
-              <span>Comparação de Prompt — Orquestrador Supremo V0id</span>
-            </h3>
-            <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto mb-4">
-              <div className="bg-[#050508] p-3 rounded-xl border border-[#181824] text-xs text-gray-300 whitespace-pre-wrap">
-                {superPromptModal.raw}
-              </div>
-              <pre className="bg-[#050508] p-3 rounded-xl border border-amber-900/40 text-xs text-amber-300 whitespace-pre-wrap font-mono overflow-y-auto">
-                {superPromptModal.compiled}
-              </pre>
-            </div>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setSuperPromptModal(null)}
-                className="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-5 py-2 rounded-xl transition"
-              >
-                Entendido
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

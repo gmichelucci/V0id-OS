@@ -70,9 +70,18 @@ export class NexusDB {
         updated_at TEXT DEFAULT (datetime('now'))
       );
 
+      CREATE TABLE IF NOT EXISTS chat_sessions (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      );
+
       CREATE TABLE IF NOT EXISTS chat_messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         project_id TEXT NOT NULL,
+        session_id TEXT DEFAULT 'default',
         sender TEXT NOT NULL,
         text TEXT NOT NULL,
         provider TEXT,
@@ -84,6 +93,10 @@ export class NexusDB {
       );
       DELETE FROM chat_messages WHERE LENGTH(TRIM(text)) = 0 OR text IS NULL;
     `);
+
+    try {
+      this.db.exec("ALTER TABLE chat_messages ADD COLUMN session_id TEXT DEFAULT 'default'");
+    } catch {}
   }
 
   // Projects
@@ -191,15 +204,48 @@ export class NexusDB {
     return this.db.prepare('SELECT * FROM token_hibernation').all();
   }
 
+  // Chat Sessions Management
+  getSessions(projectId = 'global') {
+    return this.db.prepare('SELECT * FROM chat_sessions WHERE project_id = ? ORDER BY updated_at DESC').all(projectId);
+  }
+
+  createSession(projectId = 'global', title = 'Nova Conversa') {
+    const id = `session_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    this.db.prepare(`
+      INSERT INTO chat_sessions (id, project_id, title)
+      VALUES (?, ?, ?)
+    `).run(id, projectId, title);
+    return { id, project_id: projectId, title };
+  }
+
+  deleteSession(sessionId) {
+    this.db.prepare('DELETE FROM chat_messages WHERE session_id = ?').run(sessionId);
+    this.db.prepare('DELETE FROM chat_sessions WHERE id = ?').run(sessionId);
+    return true;
+  }
+
   // Persistent Chat History
-  saveChatMessage({ projectId = 'global', sender, text, provider = null, tier = null, model = null, toolResults = [] }) {
+  saveChatMessage({ projectId = 'global', sessionId = 'default', sender, text, provider = null, tier = null, model = null, toolResults = [] }) {
     if (!text || typeof text !== 'string' || !text.trim()) return null;
+
+    // Garante que a sessão existe e atualiza timestamp
+    try {
+      const sess = this.db.prepare('SELECT id FROM chat_sessions WHERE id = ?').get(sessionId);
+      if (!sess) {
+        const title = text.replace(/[\r\n]+/g, ' ').slice(0, 32) + (text.length > 32 ? '...' : '');
+        this.db.prepare("INSERT OR IGNORE INTO chat_sessions (id, project_id, title) VALUES (?, ?, ?)").run(sessionId, projectId, title);
+      } else {
+        this.db.prepare("UPDATE chat_sessions SET updated_at = datetime('now') WHERE id = ?").run(sessionId);
+      }
+    } catch {}
+
     const stmt = this.db.prepare(`
-      INSERT INTO chat_messages (project_id, sender, text, provider, tier, model, tool_results)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO chat_messages (project_id, session_id, sender, text, provider, tier, model, tool_results)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
       projectId,
+      sessionId,
       sender,
       text,
       provider,
@@ -209,15 +255,18 @@ export class NexusDB {
     );
   }
 
-  getChatMessages(projectId = 'global', limit = 100) {
-    const stmt = this.db.prepare(`
-      SELECT id, project_id, sender, text, provider, tier, model, tool_results, is_gold, created_at
-      FROM chat_messages
-      WHERE project_id = ? AND LENGTH(TRIM(text)) > 0
-      ORDER BY id ASC
-      LIMIT ?
-    `);
-    const rows = stmt.all(projectId, limit);
+  getChatMessages(projectId = 'global', sessionId = null, limit = 100) {
+    let query = 'SELECT id, project_id, session_id, sender, text, provider, tier, model, tool_results, is_gold, created_at FROM chat_messages WHERE project_id = ? AND LENGTH(TRIM(text)) > 0';
+    const params = [projectId];
+    if (sessionId) {
+      query += ' AND (session_id = ? OR session_id IS NULL)';
+      params.push(sessionId);
+    }
+    query += ' ORDER BY id ASC LIMIT ?';
+    params.push(limit);
+
+    const stmt = this.db.prepare(query);
+    const rows = stmt.all(...params);
     return rows.map(r => ({
       ...r,
       tool_results: r.tool_results ? JSON.parse(r.tool_results) : []
