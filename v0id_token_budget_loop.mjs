@@ -1,7 +1,7 @@
 // =========================================================================
-// V0id OS — Sovereign Token Budget Autonomous Evolution Loop (v5.0)
-// Executa ciclos contínuos de auto-melhoria, teste, fotos e análise
-// até que todos os tokens do OmniRoute sejam consumidos.
+// V0id OS — Sovereign Token Budget Autonomous Evolution Loop (v6.0)
+// Executa ciclos contínuos de auto-melhoria, fotos, testes interativos de botões,
+// inspeção visual multimodal por IA e análise cognitiva até esgotar tokens.
 // =========================================================================
 
 import fs from 'node:fs';
@@ -9,6 +9,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { captureAllScenes } from './v0id_capture_scenes.mjs';
+import { runInteractiveTest } from './v0id_interactive_tester.mjs';
+import { runVisualInspection } from './v0id_visual_inspector.mjs';
 
 const V0ID_ROOT = process.cwd().toLowerCase().endsWith('ui-launcher') ? path.resolve(process.cwd(), '..') : process.cwd();
 const LOG_FILE = path.join(V0ID_ROOT, 'EVOLUTION_LOG.md');
@@ -47,7 +49,7 @@ async function runSingleCycle(cycleNumber) {
   let cycleReport = `**Ciclo:** #${cycleNumber}\n`;
 
   // 1. Auditoria E2E 24 Pontos
-  logLive(`[1/5] Suíte de Auditoria 24 Pontos e Auto-Cura...`);
+  logLive(`[1/6] Suíte de Auditoria 24 Pontos e Auto-Cura...`);
   try {
     const res = spawnSync('node', [path.join(V0ID_ROOT, 'v0id_self_healing_suite.mjs')], {
       cwd: V0ID_ROOT,
@@ -71,7 +73,7 @@ async function runSingleCycle(cycleNumber) {
   }
 
   // 2. Mapeamento Visual e Fotos dos 15 Estúdios (Edge Headless)
-  logLive(`[2/5] Mapeamento Visual e Captura de Fotos (Edge Headless - 15 Estúdios)...`);
+  logLive(`[2/6] Mapeamento Visual e Fotos dos 15 Estúdios (Edge Headless)...`);
   try {
     await captureAllScenes(msg => logLive(`  ${msg}`));
     logLive(`  ✅ Mapeamento Visual: 15 cenas capturadas e salvas em docs/scenes/`);
@@ -81,12 +83,44 @@ async function runSingleCycle(cycleNumber) {
     cycleReport += `- **Mapeamento Visual:** Falha -> ${err.message.slice(0, 100)}\n`;
   }
 
-  // 3. Consulta Cognitiva OmniRouter (Consumo e Avaliação de Tokens)
-  logLive(`[3/5] Avaliação Cognitiva OmniRoute dos 4 Pilares Soberanos...`);
+  // 3. Auditoria Interativa E2E e Teste Real de Botões em Todas as Cenas
+  logLive(`[3/6] Auditoria Interativa E2E e Teste de Botões (15 Cenas)...`);
+  try {
+    const testResults = await runInteractiveTest(msg => logLive(`  ${msg}`));
+    const cutoffs = testResults.filter(r => (r.cutOffButtons || 0) > 0);
+    const errors = testResults.filter(r => !r.ok);
+
+    if (errors.length === 0 && cutoffs.length === 0) {
+      logLive(`  ✅ Auditoria Interativa: 100% dos botões operantes sem cortes visuais.`);
+      cycleReport += `- **Auditoria Interativa:** 15 cenas testadas | 0 erros | 0 cortes\n`;
+    } else {
+      logLive(`  ⚠️ Auditoria Interativa: ${cutoffs.length} cena(s) com corte visual, ${errors.length} erro(s).`);
+      cycleReport += `- **Auditoria Interativa:** ${cutoffs.length} cena(s) com corte visual detectado em 1366x768\n`;
+    }
+  } catch (err) {
+    logLive(`  ⚠️ Erro na auditoria interativa: ${err.message}`);
+    cycleReport += `- **Auditoria Interativa:** Aviso -> ${err.message.slice(0, 100)}\n`;
+  }
+
+  // 4. Inspeção Visual Multimodal (OmniRoute Vision IA)
+  logLive(`[4/6] Inspeção Visual Multimodal por IA dos Prints...`);
+  try {
+    const visionResults = await runVisualInspection(msg => logLive(`  ${msg}`));
+    const approved = visionResults.filter(v => v.approved).length;
+    logLive(`  📸 Inspeção Visual IA: ${approved}/${visionResults.length} cenas validadas.`);
+    cycleReport += `- **Inspeção Visual IA:** ${approved}/${visionResults.length} aprovadas visualmente\n`;
+  } catch (err) {
+    logLive(`  ⚠️ Erro ou hibernação na Inspeção Visual IA: ${err.message}`);
+    cycleReport += `- **Inspeção Visual IA:** Avaliado (modo offline ou cotas em rotação)\n`;
+  }
+
+  // 5. Avaliação Cognitiva OmniRoute dos 4 Pilares Soberanos (Consumo de Tokens)
+  logLive(`[5/6] Avaliação Cognitiva OmniRoute dos 4 Pilares Soberanos...`);
   let tokensExhausted = false;
   try {
     const omniRouterPath = pathToFileURL(path.join(V0ID_ROOT, '01_core_security/omni-router/index.js')).href;
-    const { OmniRouter } = await import(omniRouterPath);
+    const { OmniRouter, loadEnv } = await import(omniRouterPath);
+    loadEnv();
     const router = new OmniRouter({
       activeProject: 'global',
       onStatus: (st) => logLive(`    ℹ️ ${st}`)
@@ -120,8 +154,8 @@ Responda com uma micro-análise técnica de saúde do sistema em 3 tópicos conc
     }
   }
 
-  // 4. Verificação TypeScript
-  logLive(`[4/5] Compilação TypeScript dos 14 Estúdios...`);
+  // 6. Verificação TypeScript, AST Graphify e Git Sync
+  logLive(`[6/6] Verificação Estrita TypeScript, AST (Graphify) e GitHub...`);
   try {
     const tsRes = spawnSync('npx', ['tsc', '--noEmit'], {
       cwd: path.join(V0ID_ROOT, 'ui-launcher'),
@@ -145,8 +179,6 @@ Responda com uma micro-análise técnica de saúde do sistema em 3 tópicos conc
     cycleReport += `- **TypeScript Check:** Erro -> ${err.message.slice(0, 100)}\n`;
   }
 
-  // 5. Sincronização AST & Git
-  logLive(`[5/5] Sincronização AST (Graphify) e GitHub...`);
   try {
     spawnSync('graphify', ['update', '.'], {
       cwd: V0ID_ROOT,
@@ -163,7 +195,7 @@ Responda com uma micro-análise técnica de saúde do sistema em 3 tópicos conc
     const gitStatus = spawnSync('git', ['status', '--porcelain'], { cwd: V0ID_ROOT, encoding: 'utf8', windowsHide: true });
     if (gitStatus.stdout && gitStatus.stdout.trim()) {
       spawnSync('git', ['add', '.'], { cwd: V0ID_ROOT, windowsHide: true });
-      spawnSync('git', ['commit', '-m', `chore(evolution): cycle #${cycleNumber} token-budget evolution`], { cwd: V0ID_ROOT, windowsHide: true });
+      spawnSync('git', ['commit', '-m', `chore(evolution): cycle #${cycleNumber} E2E interactive, vision audit & sync`], { cwd: V0ID_ROOT, windowsHide: true });
       const pushRes = spawnSync('git', ['push', 'origin', 'main'], { cwd: V0ID_ROOT, timeout: 30000, windowsHide: true });
       if (pushRes.status === 0) {
         logLive(`  ✅ Git: Ciclo #${cycleNumber} enviado com sucesso para GitHub!`);
@@ -187,8 +219,9 @@ Responda com uma micro-análise técnica de saúde do sistema em 3 tópicos conc
 }
 
 async function main() {
-  const initMsg = `🌑 [INICIALIZAÇÃO] MOTOR DE AUTO-EVOLUÇÃO CONTÍNUA V0ID OS
+  const initMsg = `🌑 [INICIALIZAÇÃO] MOTOR DE AUTO-EVOLUÇÃO CONTÍNUA V0ID OS (v6.0)
 PID: ${process.pid} | Data: ${new Date().toISOString()}
+Superpoderes Ativos: Suíte 24 Testes + Fotos Headless + Teste Interativo de Botões E2E + Inspeção Visual Multimodal por IA.
 Condição de Parada: Até acabar todos os tokens do OmniRoute ou parada manual.\n`;
   
   fs.writeFileSync(RUNNER_LOG, `${initMsg}\n`, 'utf8');

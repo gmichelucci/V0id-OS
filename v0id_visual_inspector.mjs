@@ -20,7 +20,8 @@ export async function runVisualInspection(onProgress) {
   console.log(`==================================================\n`);
 
   const omniRouterPath = pathToFileURL(path.join(V0ID_ROOT, '01_core_security/omni-router/index.js')).href;
-  const { OmniRouter } = await import(omniRouterPath);
+  const { OmniRouter, loadEnv } = await import(omniRouterPath);
+  loadEnv();
   const router = new OmniRouter({ activeProject: 'global' });
 
   const inspectionResults = [];
