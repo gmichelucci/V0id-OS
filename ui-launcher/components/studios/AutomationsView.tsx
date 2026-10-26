@@ -227,12 +227,13 @@ export default function AutomationsView({ activeProject }: { activeProject: stri
     const lines = recentLogs.split('\n');
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i];
-      if (line.includes('[1/6]')) return { label: 'Etapa 1/6: Suíte de 24 Testes & Auto-Cura', color: 'text-amber-300' };
-      if (line.includes('[2/6]')) return { label: 'Etapa 2/6: Mapeamento Visual & Fotos Edge Headless', color: 'text-cyan-300' };
-      if (line.includes('[3/6]')) return { label: 'Etapa 3/6: Auditoria Interativa E2E & Botões', color: 'text-sky-300' };
-      if (line.includes('[4/6]')) return { label: 'Etapa 4/6: Inspeção Visual Multimodal por IA', color: 'text-pink-300' };
-      if (line.includes('[5/6]')) return { label: 'Etapa 5/6: Avaliação Cognitiva dos 4 Pilares', color: 'text-indigo-300' };
-      if (line.includes('[6/6]')) return { label: 'Etapa 6/6: Verificação TypeScript, AST & GitHub', color: 'text-purple-300' };
+      if (line.includes('[1/7]')) return { label: 'Etapa 1/7: Suíte de 24 Testes & Auto-Cura', color: 'text-amber-300' };
+      if (line.includes('[2/7]')) return { label: 'Etapa 2/7: Mapeamento Visual & Fotos Edge Headless', color: 'text-cyan-300' };
+      if (line.includes('[3/7]')) return { label: 'Etapa 3/7: Auditoria Interativa E2E & Botões', color: 'text-sky-300' };
+      if (line.includes('[4/7]')) return { label: 'Etapa 4/7: Inspeção Visual Multimodal por IA', color: 'text-pink-300' };
+      if (line.includes('[5/7]')) return { label: 'Etapa 5/7: Motor de Auto-Cura Ativa & Refatoração', color: 'text-emerald-300' };
+      if (line.includes('[6/7]')) return { label: 'Etapa 6/7: Avaliação Cognitiva dos 4 Pilares', color: 'text-indigo-300' };
+      if (line.includes('[7/7]')) return { label: 'Etapa 7/7: Verificação TypeScript, AST & GitHub', color: 'text-purple-300' };
     }
     return { label: 'Processando ciclo em background...', color: 'text-emerald-300' };
   };
