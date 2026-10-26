@@ -82,6 +82,7 @@ export class NexusDB {
         is_gold INTEGER DEFAULT 0,
         created_at TEXT DEFAULT (datetime('now'))
       );
+      DELETE FROM chat_messages WHERE LENGTH(TRIM(text)) = 0 OR text IS NULL;
     `);
   }
 
@@ -192,6 +193,7 @@ export class NexusDB {
 
   // Persistent Chat History
   saveChatMessage({ projectId = 'global', sender, text, provider = null, tier = null, model = null, toolResults = [] }) {
+    if (!text || typeof text !== 'string' || !text.trim()) return null;
     const stmt = this.db.prepare(`
       INSERT INTO chat_messages (project_id, sender, text, provider, tier, model, tool_results)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -211,7 +213,7 @@ export class NexusDB {
     const stmt = this.db.prepare(`
       SELECT id, project_id, sender, text, provider, tier, model, tool_results, is_gold, created_at
       FROM chat_messages
-      WHERE project_id = ?
+      WHERE project_id = ? AND LENGTH(TRIM(text)) > 0
       ORDER BY id ASC
       LIMIT ?
     `);
