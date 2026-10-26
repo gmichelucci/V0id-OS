@@ -132,11 +132,12 @@ export async function callGemini(apiKey, model, systemPrompt, userPrompt, option
     body.tools = [{ functionDeclarations: declarations }];
   }
 
+  const timeoutMs = options.timeout || (options.images?.length ? 60000 : 30000);
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(25000)
+    signal: AbortSignal.timeout(timeoutMs)
   });
 
   if (res.status === 429 || res.status === 503) {
