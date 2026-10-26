@@ -70,6 +70,17 @@ export default function CoreSoulView({ activeProject }: { activeProject: string 
 
   return (
     <div className="flex-1 flex flex-col p-6 overflow-hidden bg-[#030306]">
+  <style>{`
+    .project-select-trigger {
+      @apply max-w-none min-w-[280px] truncate;
+    }
+    .carousel-card-inactive {
+      @apply opacity-40 scale-90 blur-[1px] pointer-events-none transition-all duration-300;
+    }
+    .carousel-container {
+      @apply gap-8 perspective-[1000px];
+    }
+  `}</style>
       {toastMsg && (
         <div className="fixed top-4 right-4 z-50 bg-amber-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-2xl border border-amber-400/40 animate-fade-in">
           {toastMsg}

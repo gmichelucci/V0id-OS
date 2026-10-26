@@ -1,17 +1,17 @@
 # Graph Report - V0id  (2026-10-26)
 
 ## Corpus Check
-- 71 files · ~303,044 words
+- 72 files · ~303,366 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 17 file(s) not represented in the graph (top: .bat 4, .ico 3, .glb 2)
 
 ## Summary
-- 434 nodes · 680 edges · 27 communities (19 shown, 8 thin omitted)
+- 436 nodes · 681 edges · 22 communities (13 shown, 9 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ae715f76`
+- Built from commit: `69f2abb4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -30,16 +30,11 @@
 - StudioView.tsx
 - compilerOptions
 - v0id_blender_addon.py
-- ref_node_path
+- EdgeCDPClient
 - projetos/test/vault/README.md
 - v0id_token_budget_loop.mjs
-- nexus.js
+- VISUAL_INSPECTION_REPORT.md
 - INTERACTIVE_TEST_REPORT.md
-- generate_multi_res_icon.mjs
-- ref_node_fs
-- projects.ts
-- v0id_self_healing_suite.mjs
-- v0id_autonomous_evolution_loop.mjs
 
 ## God Nodes (most connected - your core abstractions)
 1. `🌑 V0ID OS — LOG DE EVOLUÇÃO AUTÔNOMA E AUTO-CURA` - 24 edges
@@ -54,6 +49,8 @@
 10. `OmniRouter` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `runSingleCycle()` --calls--> `runInteractiveTest()`  [EXTRACTED]
+  v0id_token_budget_loop.mjs → v0id_interactive_tester.mjs
 - `StudioView()` --calls--> `BlackHoleIcon()`  [EXTRACTED]
   ui-launcher/components/StudioView.tsx → ui-launcher/components/icons/BlackHoleIcon.tsx
 - `StudioView()` --calls--> `AutoForgeView()`  [EXTRACTED]
@@ -62,21 +59,19 @@
   ui-launcher/components/StudioView.tsx → ui-launcher/components/studios/AutomationsView.tsx
 - `StudioView()` --calls--> `CodeGameStudioView()`  [EXTRACTED]
   ui-launcher/components/StudioView.tsx → ui-launcher/components/studios/CodeGameStudioView.tsx
-- `StudioView()` --calls--> `CoreSoulView()`  [EXTRACTED]
-  ui-launcher/components/StudioView.tsx → ui-launcher/components/studios/CoreSoulView.tsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (27 total, 8 thin omitted)
+## Communities (22 total, 9 thin omitted)
 
 ### Community 0 - "agent.test.js"
-Cohesion: 0.09
-Nodes (21): agent, antiGhostAgent, bigText, checkpoint, cmdOut, compressed, diffContent, dirList (+13 more)
+Cohesion: 0.05
+Nodes (41): fastProviders, gatekeeper, logs, providers, rle, router, tier1, tier2 (+33 more)
 
 ### Community 3 - "index.js"
-Cohesion: 0.11
-Nodes (20): loadEnv(), Gatekeeper, fastProviders, gatekeeper, logs, providers, rle, router (+12 more)
+Cohesion: 0.19
+Nodes (9): loadEnv(), Gatekeeper, callAgyCli(), callGemini(), callOpenAICompatible(), isAgyAvailable(), RateLimitError, TOOL_DEFINITIONS (+1 more)
 
 ### Community 4 - "package.json"
 Cohesion: 0.11
@@ -87,8 +82,8 @@ Cohesion: 0.15
 Nodes (6): V0idAgent, agent, rl, wsServer, V0idWSServer, ws
 
 ### Community 6 - "next"
-Cohesion: 0.10
-Nodes (12): next, getRecentLogs(), handler(), isLoopRunning(), LOG_FILE, PID_FILE, RUNNER_LOG, STOP_FILE (+4 more)
+Cohesion: 0.09
+Nodes (14): next, getRecentLogs(), handler(), isLoopRunning(), LOG_FILE, PID_FILE, RUNNER_LOG, STOP_FILE (+6 more)
 
 ### Community 7 - "🌑 V0ID OS — BLUEPRINT MESTRE & ESPECIFICAÇÃO OFICIAL (v4.0 FINAL)"
 Cohesion: 0.22
@@ -118,53 +113,29 @@ Nodes (15): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModu
 Cohesion: 0.14
 Nodes (5): optimize_and_export(), parse_args(), V0ID_OT_ExportGameModel, V0ID_OT_ExportOmniMediaRender, V0ID_PT_MainPanel
 
-### Community 17 - "ref_node_path"
-Cohesion: 0.22
-Nodes (6): config, handler(), scanDir(), VAULT_ROOT, ENV_PATH, SOUL_PATH
-
 ### Community 19 - "v0id_token_budget_loop.mjs"
-Cohesion: 0.10
-Nodes (24): dynamicImport, handler(), runSelfHealing(), runValidation(), STUDIO_COMPONENT_MAP, captureAllScenes(), OUTPUT_DIR, SCENES (+16 more)
-
-### Community 20 - "nexus.js"
-Cohesion: 0.25
-Nodes (7): DB_PATH, __dirname, nexus, foundHistory, hibState, nextTask, projs
-
-### Community 22 - "generate_multi_res_icon.mjs"
-Cohesion: 0.22
-Nodes (8): allBuffers, dirEntries, header, htmlFile, multiIco, pngEntries, sizes, TEMP_DIR
-
-### Community 24 - "projects.ts"
-Cohesion: 0.40
-Nodes (4): DB_PATH, getDb(), handler(), VAULT_ROOT
-
-### Community 25 - "v0id_self_healing_suite.mjs"
-Cohesion: 0.60
-Nodes (4): logFail(), logPass(), results, runSuite()
-
-### Community 26 - "v0id_autonomous_evolution_loop.mjs"
-Cohesion: 0.67
-Nodes (3): appendLog(), LOG_FILE, runEvolutionCycle()
+Cohesion: 0.06
+Nodes (45): allBuffers, dirEntries, header, htmlFile, multiIco, pngEntries, sizes, TEMP_DIR (+37 more)
 
 ## Knowledge Gaps
 - **8 isolated node(s):** `speed`, `react-dom`, `@types/node`, `@types/react`, `autoprefixer` (+3 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 238 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 240 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `next` connect `next` to `ui-launcher/package.json`, `StudioView.tsx`, `ref_node_path`, `v0id_token_budget_loop.mjs`, `projects.ts`?**
-  _High betweenness centrality (0.269) - this node is a cross-community bridge._
+- **Why does `next` connect `next` to `StudioView.tsx`, `ui-launcher/package.json`, `v0id_token_budget_loop.mjs`?**
+  _High betweenness centrality (0.267) - this node is a cross-community bridge._
 - **What connects `speed`, `react-dom`, `@types/node` to the rest of the system?**
   _8 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `agent.test.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.09090909090909091 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.050170068027210885 - nodes in this community are weakly interconnected._
 - **Why does `react` connect `StudioView.tsx` to `ui-launcher/package.json`, `next`?**
-  _High betweenness centrality (0.127) - this node is a cross-community bridge._
+  _High betweenness centrality (0.126) - this node is a cross-community bridge._
 - **Should `NexusDB` be split into smaller, more focused modules?**
   _Cohesion score 0.09486166007905138 - nodes in this community are weakly interconnected._
-- **Why does `NexusDB` connect `NexusDB` to `nexus.js`?**
-  _High betweenness centrality (0.075) - this node is a cross-community bridge._
-- **Should `index.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.1064102564102564 - nodes in this community are weakly interconnected._
+- **Why does `NexusDB` connect `NexusDB` to `agent.test.js`?**
+  _High betweenness centrality (0.074) - this node is a cross-community bridge._
+- **Should `package.json` be split into smaller, more focused modules?**
+  _Cohesion score 0.1111111111111111 - nodes in this community are weakly interconnected._
