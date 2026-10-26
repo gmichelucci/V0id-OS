@@ -1,17 +1,17 @@
 # Graph Report - V0id  (2026-10-26)
 
 ## Corpus Check
-- 64 files · ~283,666 words
+- 64 files · ~266,985 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .bat 3, .glb 2, .example 1)
 
 ## Summary
-- 395 nodes · 606 edges · 24 communities (18 shown, 6 thin omitted)
+- 396 nodes · 607 edges · 24 communities (18 shown, 6 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `36e59e92`
+- Built from commit: `5c769dc9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -45,8 +45,8 @@
 4. `BlackHoleIcon()` - 13 edges
 5. `compilerOptions` - 13 edges
 6. `Gatekeeper` - 12 edges
-7. `V0idAgent` - 11 edges
-8. `🌑 V0ID OS — LOG DE EVOLUÇÃO AUTÔNOMA E AUTO-CURA` - 11 edges
+7. `🌑 V0ID OS — LOG DE EVOLUÇÃO AUTÔNOMA E AUTO-CURA` - 12 edges
+8. `V0idAgent` - 11 edges
 9. `OmniRouter` - 10 edges
 10. `next` - 10 edges
 
@@ -93,7 +93,7 @@ Nodes (8): 1. COMO O V0ID FUNCIONA (RESUMO EXECUTIVO EM 5 PASSOS), 2. DIAGRAMA G
 
 ### Community 8 - "🌑 V0ID OS"
 Cohesion: 0.06
-Nodes (27): 🌑 V0ID OS — MAPA VISUAL DAS CENAS E ESTÚDIOS, [CICLO DE AUDITORIA] 2026-10-26T02:37:26.445Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:06.270Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:52.445Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:09:59.521Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:17:49.491Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:23:42.644Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:26:12.239Z (+19 more)
+Nodes (28): 🌑 V0ID OS — MAPA VISUAL DAS CENAS E ESTÚDIOS, [CICLO DE AUDITORIA] 2026-10-26T02:37:26.445Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:06.270Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:52.445Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:09:59.521Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:17:49.491Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:23:42.644Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:26:12.239Z (+20 more)
 
 ### Community 9 - "ui-launcher/package.json"
 Cohesion: 0.08
@@ -141,14 +141,14 @@ Nodes (4): DB_PATH, getDb(), handler(), VAULT_ROOT
 
 ## Knowledge Gaps
 - **8 isolated node(s):** `speed`, `react-dom`, `@types/node`, `@types/react`, `autoprefixer` (+3 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 214 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 215 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `next` connect `automations.ts` to `ui-launcher/package.json`, `StudioView.tsx`, `ref_node_fs`, `v0id_self_healing_suite.mjs`, `projects.ts`?**
-  _High betweenness centrality (0.273) - this node is a cross-community bridge._
+  _High betweenness centrality (0.272) - this node is a cross-community bridge._
 - **What connects `speed`, `react-dom`, `@types/node` to the rest of the system?**
   _8 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `agent.test.js` be split into smaller, more focused modules?**
