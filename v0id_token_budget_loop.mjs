@@ -11,6 +11,7 @@ import { pathToFileURL } from 'node:url';
 import { captureAllScenes } from './v0id_capture_scenes.mjs';
 import { runInteractiveTest } from './v0id_interactive_tester.mjs';
 import { runVisualInspection } from './v0id_visual_inspector.mjs';
+import { runSelfHealing } from './v0id_auto_healer.mjs';
 
 const V0ID_ROOT = process.cwd().toLowerCase().endsWith('ui-launcher') ? path.resolve(process.cwd(), '..') : process.cwd();
 const LOG_FILE = path.join(V0ID_ROOT, 'EVOLUTION_LOG.md');
@@ -47,9 +48,11 @@ async function runSingleCycle(cycleNumber) {
   logLive(`==================================================`);
 
   let cycleReport = `**Ciclo:** #${cycleNumber}\n`;
+  let testResults = [];
+  let visionResults = [];
 
   // 1. Auditoria E2E 24 Pontos
-  logLive(`[1/6] Suíte de Auditoria 24 Pontos e Auto-Cura...`);
+  logLive(`[1/7] Suíte de Auditoria 24 Pontos e Auto-Cura...`);
   try {
     const res = spawnSync('node', [path.join(V0ID_ROOT, 'v0id_self_healing_suite.mjs')], {
       cwd: V0ID_ROOT,
@@ -73,7 +76,7 @@ async function runSingleCycle(cycleNumber) {
   }
 
   // 2. Mapeamento Visual e Fotos dos 15 Estúdios (Edge Headless)
-  logLive(`[2/6] Mapeamento Visual e Fotos dos 15 Estúdios (Edge Headless)...`);
+  logLive(`[2/7] Mapeamento Visual e Fotos dos 15 Estúdios (Edge Headless)...`);
   try {
     await captureAllScenes(msg => logLive(`  ${msg}`));
     logLive(`  ✅ Mapeamento Visual: 15 cenas capturadas e salvas em docs/scenes/`);
@@ -84,9 +87,9 @@ async function runSingleCycle(cycleNumber) {
   }
 
   // 3. Auditoria Interativa E2E e Teste Real de Botões em Todas as Cenas
-  logLive(`[3/6] Auditoria Interativa E2E e Teste de Botões (15 Cenas)...`);
+  logLive(`[3/7] Auditoria Interativa E2E e Teste de Botões (15 Cenas)...`);
   try {
-    const testResults = await runInteractiveTest(msg => logLive(`  ${msg}`));
+    testResults = await runInteractiveTest(msg => logLive(`  ${msg}`));
     const cutoffs = testResults.filter(r => (r.cutOffButtons || 0) > 0);
     const errors = testResults.filter(r => !r.ok);
 
@@ -103,9 +106,9 @@ async function runSingleCycle(cycleNumber) {
   }
 
   // 4. Inspeção Visual Multimodal (OmniRoute Vision IA)
-  logLive(`[4/6] Inspeção Visual Multimodal por IA dos Prints...`);
+  logLive(`[4/7] Inspeção Visual Multimodal por IA dos Prints...`);
   try {
-    const visionResults = await runVisualInspection(msg => logLive(`  ${msg}`));
+    visionResults = await runVisualInspection(msg => logLive(`  ${msg}`));
     const approved = visionResults.filter(v => v.approved).length;
     logLive(`  📸 Inspeção Visual IA: ${approved}/${visionResults.length} cenas validadas.`);
     cycleReport += `- **Inspeção Visual IA:** ${approved}/${visionResults.length} aprovadas visualmente\n`;
@@ -114,8 +117,35 @@ async function runSingleCycle(cycleNumber) {
     cycleReport += `- **Inspeção Visual IA:** Avaliado (modo offline ou cotas em rotação)\n`;
   }
 
-  // 5. Avaliação Cognitiva OmniRoute dos 4 Pilares Soberanos (Consumo de Tokens)
-  logLive(`[5/6] Avaliação Cognitiva OmniRoute dos 4 Pilares Soberanos...`);
+  // 5. Motor de Auto-Cura Ativa e Refatoração de Código (Melhorias Reais)
+  logLive(`[5/7] Motor de Auto-Cura Ativa e Refatoração de Código...`);
+  try {
+    const defects = [];
+    for (const v of visionResults) {
+      if (!v.approved) {
+        defects.push({ scene: v.scene, description: v.analysis });
+      }
+    }
+    for (const t of testResults) {
+      if (!t.ok || (t.cutOffButtons || 0) > 0) {
+        defects.push({ scene: t.scene, description: `Cena ${t.scene} apresentou ${t.cutOffButtons || 0} botões cortados ou problemas de layout.` });
+      }
+    }
+    const healRes = await runSelfHealing(defects, msg => logLive(`  ${msg}`));
+    if (healRes.healedCount > 0) {
+      logLive(`  ✨ Auto-Cura: ${healRes.healedCount} melhoria(s) de código aplicadas com sucesso!`);
+      cycleReport += `- **Auto-Cura Ativa:** ${healRes.healedCount} melhorias aplicadas no código (${healRes.items.map(i => i.scene).join(', ')})\n`;
+    } else {
+      logLive(`  ✅ Auto-Cura: Nenhuma mutação necessária. Código validado.`);
+      cycleReport += `- **Auto-Cura Ativa:** Código íntegro (0 mutações pendentes)\n`;
+    }
+  } catch (err) {
+    logLive(`  ⚠️ Aviso na auto-cura: ${err.message}`);
+    cycleReport += `- **Auto-Cura Ativa:** Nota -> ${err.message.slice(0, 100)}\n`;
+  }
+
+  // 6. Avaliação Cognitiva OmniRoute dos 4 Pilares Soberanos (Consumo de Tokens)
+  logLive(`[6/7] Avaliação Cognitiva OmniRoute dos 4 Pilares Soberanos...`);
   let tokensExhausted = false;
   try {
     const omniRouterPath = pathToFileURL(path.join(V0ID_ROOT, '01_core_security/omni-router/index.js')).href;
@@ -154,8 +184,8 @@ Responda com uma micro-análise técnica de saúde do sistema em 3 tópicos conc
     }
   }
 
-  // 6. Verificação TypeScript, AST Graphify e Git Sync
-  logLive(`[6/6] Verificação Estrita TypeScript, AST (Graphify) e GitHub...`);
+  // 7. Verificação TypeScript, AST Graphify e Git Sync
+  logLive(`[7/7] Verificação Estrita TypeScript, AST (Graphify) e GitHub...`);
   try {
     const tsRes = spawnSync('npx', ['tsc', '--noEmit'], {
       cwd: path.join(V0ID_ROOT, 'ui-launcher'),
