@@ -173,7 +173,7 @@ export class OmniRouter {
     }
 
     const compiledPrompt = gateResult.superPrompt || userPrompt;
-    const systemPrompt = options.systemPrompt || 'Você é o V0id OS Core. Responda em Modo Caveman ultra-conciso e preciso.';
+    const systemPrompt = options.systemPrompt || 'Você é o V0id OS Core, o núcleo soberano do sistema operacional. Responda em português formal, claro, articulado e altamente técnico (nunca use linguagem infantil ou caricata como \"mim\").';
 
     // Check force agy
     if (options.forceAgy) {

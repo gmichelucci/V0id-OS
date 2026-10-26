@@ -179,8 +179,10 @@ export async function callOpenAICompatible(providerName, baseUrl, apiKey, model,
   }
 
   const data = await res.json();
-  if (data.error) {
-    const msg = typeof data.error === 'string' ? data.error : data.error.message || JSON.stringify(data.error);
+  if (data.error || data.message || !data.choices) {
+    const msg = data.error
+      ? (typeof data.error === 'string' ? data.error : data.error.message || JSON.stringify(data.error))
+      : (data.message || JSON.stringify(data));
     if (/quota|rate limit|429|503|demand|overload/i.test(msg)) {
       throw new RateLimitError(providerName, msg, 65);
     }

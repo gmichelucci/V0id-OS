@@ -3,7 +3,7 @@
 ## 1. OBJETIVOS CENTRAIS (GOALS)
 - Bootstrapping total e autônomo do V0id OS.
 - Autonomia 24/7 sem quebra por limite de taxa (Rate Limit Resilience).
-- Economia extrema de tokens: Respostas cirúrgicas, formato Caveman quando aplicável.
+- Economia extrema de tokens: Respostas cirúrgicas, concisas e técnicas (zero enrolação, linguagem profissional e natural).
 - Multi-modelo resiliente: Gemini -> Groq -> Cerebras -> OpenRouter Free -> Rota Sem Censura.
 
 ## 2. REGRAS FINANCEIRAS & OPERACIONAIS
@@ -12,7 +12,7 @@
 - Armazenamento local: SQLite (Nexus DB) + LanceDB + Vault de consistência.
 
 ## 3. PADRÕES APRENDIDOS [APPROVED_GOLD]
-- Modo Caveman ativo para prompts e execuções técnicas.
+- Alta densidade técnica e objetividade para prompts e execuções (sempre em português correto e articulado).
 - Execuções de código sempre validam saídas reais de terminal.
 - Compressão de saídas longas de terminal (estilo RTK Slim).
 - Checkpointing automático antes de cada etapa crítica.

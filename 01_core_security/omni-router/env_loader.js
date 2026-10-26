@@ -3,8 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export function loadEnv(envPath) {
-  const targetPath = envPath || path.resolve(process.cwd(), '.env');
-  if (!fs.existsSync(targetPath)) return {};
+  let targetPath = envPath || path.resolve(process.cwd(), '.env');
+  if (!fs.existsSync(targetPath)) {
+    const parentPath = path.resolve(process.cwd(), '../.env');
+    if (fs.existsSync(parentPath)) {
+      targetPath = parentPath;
+    } else {
+      return {};
+    }
+  }
 
   const content = fs.readFileSync(targetPath, 'utf8');
   const env = {};

@@ -70,7 +70,7 @@ export default function GlobalChatView({
     ponytail: true,
     rtkSlim: true,
     uncensoredMode: false,
-    cavemanMode: true,
+    cavemanMode: false,
     reaEngine: false
   });
 
@@ -253,7 +253,7 @@ export default function GlobalChatView({
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: userMsg, project: activeProject })
+          body: JSON.stringify({ message: userMsg, project: activeProject, toggles })
         });
         const data = await res.json();
         if (data.success) {

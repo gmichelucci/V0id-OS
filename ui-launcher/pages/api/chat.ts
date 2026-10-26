@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
-  const { message, project } = req.body;
+  const { message, project, toggles } = req.body;
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'Mensagem vazia' });
   }
@@ -51,6 +51,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const activeProj = project || 'global';
     const agent = new V0idAgent({ activeProject: activeProj });
+
+    // Monta o System Prompt de acordo com os Toggles ativos em tempo real
+    let systemPrompt = 'Você é o V0id OS Core, o núcleo de inteligência e orquestração do sistema operacional soberano V0id. Responda em português formal, fluido, analítico e de alto nível técnico, estruturando suas explicações de forma impecável.';
+
+    if (toggles?.cavemanMode) {
+      systemPrompt += ' Diretriz de concisão ativada: forneça respostas diretas, cirúrgicas e sem preâmbulos, focando estritamente na informação solicitada (sempre em português gramaticalmente correto, NUNCA use linguagem quebrada, infantil ou caricata como "mim").';
+    } else {
+      systemPrompt += ' Responda com clareza, eloquência e detalhamento técnico completo, apresentando soluções bem desenvolvidas e explicando os conceitos com precisão.';
+    }
+
+    if (toggles?.ponytail) {
+      systemPrompt += ' Adote a postura Ponytail (engenharia sênior pragmática: soluções limpas, menor código necessário, sem abstrações inúteis).';
+    }
 
     // Salva a mensagem do usuário no banco SQLite persistente
     try {
@@ -99,7 +112,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const response = await router.route(message, {
       forceComplex: true,
-      tools: TOOL_DEFINITIONS
+      tools: TOOL_DEFINITIONS,
+      systemPrompt,
+      uncensored: toggles?.uncensoredMode,
+      forceAgy: toggles?.forceAgy
     });
 
     let text = response.text || '';
@@ -147,7 +163,9 @@ Não invoque novas ferramentas. Responda em texto claro, técnico e executivo co
 
         const followUp = await router.route(followUpPrompt, {
           forceComplex: true,
-          systemPrompt: 'Você é o V0id OS Core. Responda de forma analítica, estruturada e detalhada ao usuário, explicando o que foi lido nos arquivos.'
+          systemPrompt: systemPrompt + ' Formule uma resposta analítica, fluida, estruturada e detalhada em linguagem natural e profissional.',
+          uncensored: toggles?.uncensoredMode,
+          forceAgy: toggles?.forceAgy
         });
         if (followUp && followUp.text) {
           text = followUp.text;
