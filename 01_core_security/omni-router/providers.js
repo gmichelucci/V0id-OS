@@ -102,7 +102,20 @@ export async function callGemini(apiKey, model, systemPrompt, userPrompt, option
       });
     }
   }
-  contents.push({ role: 'user', parts: [{ text: userPrompt }] });
+  const userParts = [{ text: userPrompt }];
+  if (Array.isArray(options.images) && options.images.length > 0) {
+    for (const img of options.images) {
+      const b64 = typeof img === 'string' ? img : img.data;
+      const mime = (typeof img === 'object' && img.mimeType) || 'image/png';
+      userParts.push({
+        inlineData: {
+          mimeType: mime,
+          data: b64
+        }
+      });
+    }
+  }
+  contents.push({ role: 'user', parts: userParts });
 
   const body = {
     contents,
@@ -172,7 +185,20 @@ export async function callOpenAICompatible(providerName, baseUrl, apiKey, model,
       });
     }
   }
-  messages.push({ role: 'user', content: userPrompt });
+  if (Array.isArray(options.images) && options.images.length > 0) {
+    const userContent = [{ type: 'text', text: userPrompt }];
+    for (const img of options.images) {
+      const b64 = typeof img === 'string' ? img : img.data;
+      const mime = (typeof img === 'object' && img.mimeType) || 'image/png';
+      userContent.push({
+        type: 'image_url',
+        image_url: { url: `data:${mime};base64,${b64}` }
+      });
+    }
+    messages.push({ role: 'user', content: userContent });
+  } else {
+    messages.push({ role: 'user', content: userPrompt });
+  }
 
   const payload = {
     model,
