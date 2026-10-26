@@ -1,0 +1,18 @@
+{
+  "name": "v0id-os",
+  "version": "0.1.0",
+  "description": "V0id OS - Autonomous Self-Bootstrapping Core",
+  "type": "module",
+  "bin": {
+    "v0id": "./01_core_security/v0id-cli/cli.js"
+  },
+  "scripts": {
+    "start": "node --no-warnings 01_core_security/v0id-cli/cli.js",
+    "test:nexus": "node --no-warnings 03_chat_projects_nexus/nexus-db/nexus.test.js",
+    "test:omniroute": "node --no-warnings 01_core_security/omni-router/omni_router.test.js",
+    "test:agent": "node --no-warnings 01_core_security/v0id-cli/agent.test.js"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}

@@ -1,0 +1,190 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+// Bypass Next.js / Webpack static analysis for native external ESM modules
+const dynamicImport = new Function('specifier', 'return import(specifier)');
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const nexusPath = pathToFileURL(path.resolve(process.cwd(), '../03_chat_projects_nexus/nexus-db/nexus.js')).href;
+
+  // 1. GET: Retorna o histórico persistido de mensagens do projeto ativo
+  if (req.method === 'GET') {
+    try {
+      const { nexus } = await dynamicImport(nexusPath);
+      const proj = (req.query.project as string) || 'global';
+      const history = nexus.getChatMessages(proj, 100);
+      return res.status(200).json({ success: true, messages: history });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // 2. POST (action=gold): Marca a última resposta como [APPROVED_GOLD] no SQLite
+  if (req.method === 'POST' && req.query.action === 'gold') {
+    try {
+      const { nexus } = await dynamicImport(nexusPath);
+      const { project = 'global' } = req.body;
+      const last = nexus.markLastMessageGold(project);
+      return res.status(200).json({ success: true, marked: last });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
+
+  const { message, project } = req.body;
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({ error: 'Mensagem vazia' });
+  }
+
+  try {
+    const omniRouterPath = pathToFileURL(path.resolve(process.cwd(), '../01_core_security/omni-router/index.js')).href;
+    const toolsPath = pathToFileURL(path.resolve(process.cwd(), '../01_core_security/v0id-cli/tools.js')).href;
+    const agentPath = pathToFileURL(path.resolve(process.cwd(), '../01_core_security/v0id-cli/agent.js')).href;
+
+    const { OmniRouter, TOOL_DEFINITIONS } = await dynamicImport(omniRouterPath);
+    const { tools } = await dynamicImport(toolsPath);
+    const { V0idAgent } = await dynamicImport(agentPath);
+    const { nexus } = await dynamicImport(nexusPath);
+
+    const activeProj = project || 'global';
+    const agent = new V0idAgent({ activeProject: activeProj });
+
+    // Salva a mensagem do usuário no banco SQLite persistente
+    try {
+      nexus.saveChatMessage({
+        projectId: activeProj,
+        sender: 'Você',
+        text: message
+      });
+    } catch (e: any) {
+      console.warn('Erro ao persistir mensagem do usuário:', e.message);
+    }
+
+    // Se o usuário iniciar com /goal no Chat Global, aciona o Autopilot do V0idAgent
+    if (message.trim().startsWith('/goal')) {
+      const goalDesc = message.replace(/^\/goal\s*/i, '').trim();
+      const goalId = await agent.planGoal(goalDesc);
+      // Dispara o loop em background
+      agent.runLoop().catch(console.error);
+
+      const autopilotReply = `🚀 [AUTOPILOT V0ID INICIADO]\nObjetivo: "${goalDesc}"\nDecomposto em micro-tarefas e registrado no Nexus DB (ID: ${goalId}).\nO V0id Agent está executando o loop autônomo com gravação direta no disco!`;
+
+      try {
+        nexus.saveChatMessage({
+          projectId: activeProj,
+          sender: 'V0id Autopilot Agent',
+          text: autopilotReply,
+          provider: 'V0id Autopilot Agent',
+          tier: 'Autonomous',
+          model: 'OmniRoute Autopilot'
+        });
+      } catch {}
+
+      return res.status(200).json({
+        success: true,
+        text: autopilotReply,
+        provider: 'V0id Autopilot Agent',
+        tier: 'Autonomous',
+        model: 'OmniRoute Autopilot',
+        toolResults: []
+      });
+    }
+
+    const router = new OmniRouter({
+      activeProject: activeProj
+    });
+
+    const response = await router.route(message, {
+      forceComplex: true,
+      tools: TOOL_DEFINITIONS
+    });
+
+    let text = response.text || '';
+    // Usa o parseTools do V0idAgent para capturar chamadas nativas + blocos JSON + Markdown ghost-writes
+    const toolCalls = agent.parseTools(text, response.toolCalls);
+    const toolResults: any[] = [];
+
+    // Executa ferramentas reais no disco se o modelo tiver invocado
+    for (const tc of toolCalls) {
+      if (tools[tc.tool]) {
+        try {
+          const r = tools[tc.tool](tc.args);
+          toolResults.push({ tool: tc.tool, args: tc.args, result: r });
+        } catch (err: any) {
+          toolResults.push({ tool: tc.tool, args: tc.args, error: err.message });
+        }
+      }
+    }
+
+    // Se o modelo invocou ferramentas no disco mas não gerou o texto explicativo final (ou mandou apenas JSON),
+    // alimenta o resultado da ferramenta de volta para o modelo gerar a resposta completa da pergunta do usuário!
+    const isOnlyToolJson = /^\s*```(?:json)?\s*\{[\s\S]*\}\s*```\s*$/i.test(text.trim());
+    if (toolResults.length > 0 && (!text.trim() || isOnlyToolJson)) {
+      try {
+        const toolSummary = toolResults.map(t => {
+          if (t.tool === 'read_file') {
+            const preview = typeof t.result === 'string' ? t.result.slice(0, 1800) : '';
+            return `[ARQUIVO LIDO: ${t.args?.filePath || t.args?.path || 'arquivo'}]\n${preview}`;
+          }
+          if (t.tool === 'list_dir') {
+            return `[CONTEÚDO DA PASTA: ${t.args?.dirPath || '.'}]\n${t.result}`;
+          }
+          return `[FERRAMENTA ${t.tool}]: ${typeof t.result === 'string' ? t.result.slice(0, 500) : 'OK'}`;
+        }).join('\n\n');
+
+        const followUpPrompt = `Você é o V0id OS Core. O usuário fez a seguinte pergunta:
+"${message}"
+
+Aqui estão os dados reais que você acabou de ler do disco rígido:
+${toolSummary}
+
+DIRETRIZ DE RESPOSTA OBRIGATÓRIA:
+Com base estritamente nos dados que você leu acima, formule agora uma resposta completa, analítica e estruturada explicando o que você leu e respondendo à pergunta original do usuário.
+Não invoque novas ferramentas. Responda em texto claro, técnico e executivo com a identidade oficial do V0id OS.`;
+
+        const followUp = await router.route(followUpPrompt, {
+          forceComplex: true,
+          systemPrompt: 'Você é o V0id OS Core. Responda de forma analítica, estruturada e detalhada ao usuário, explicando o que foi lido nos arquivos.'
+        });
+        if (followUp && followUp.text) {
+          text = followUp.text;
+        }
+      } catch (err: any) {
+        console.error('Erro na síntese da resposta com ferramentas:', err.message);
+      }
+    }
+
+    // Salva a resposta do assistente no banco SQLite persistente
+    try {
+      nexus.saveChatMessage({
+        projectId: activeProj,
+        sender: response.providerUsed || 'OmniRoute Core',
+        text,
+        provider: response.providerUsed || 'OmniRoute Core',
+        tier: response.tier,
+        model: response.model,
+        toolResults
+      });
+    } catch (e: any) {
+      console.warn('Erro ao persistir resposta do assistente:', e.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      text,
+      provider: response.providerUsed || 'OmniRoute Core',
+      tier: response.tier,
+      model: response.model,
+      toolResults
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+      provider: 'OmniRoute Error'
+    });
+  }
+}

@@ -1,0 +1,37 @@
+# =========================================================================
+# V0id OS — .gitignore Oficial
+# Protege segredos (.env com API keys) e ignora builds pesados
+# =========================================================================
+
+# Chaves e Segredos de API (NUNCA SUBIR AO GITHUB)
+.env
+*.env
+*.key
+*.pem
+
+# Dependências Node.js
+node_modules/
+ui-launcher/node_modules/
+
+# Builds e Caches Next.js
+.next/
+ui-launcher/.next/
+ui-launcher/out/
+ui-launcher/tsconfig.tsbuildinfo
+
+# Logs e Arquivos Temporários
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+test_followup.mjs
+screenshots/temp_profile/
+.system_generated/
+
+# Caches do Sistema e SQLite Runtime Locks
+*.db-journal
+*.db-wal
+
+# Arquivos de Sistema Operacional
+Thumbs.db
+.DS_Store

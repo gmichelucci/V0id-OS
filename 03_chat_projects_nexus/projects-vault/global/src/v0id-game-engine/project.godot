@@ -1,0 +1,35 @@
+; =========================================================================
+; V0ID GAME ENGINE — CONFIGURAÇÃO PRINCIPAL DO PROJETO
+; Arquitetura Baseada em Godot 4 Core (Licença MIT Open Source)
+; Tela de Carregamento & Ícone: Buraco Negro Oficial V0id OS
+; =========================================================================
+
+config_version=5
+
+[application]
+config/name="SpaceTide"
+config/description="Desenvolvido na V0id Game Engine com C++ Nativo e Blender 3D Pipeline."
+config/version="1.0.0"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "Forward Plus", "C++ GDExtension")
+config/icon="res://assets/v0id_icon.svg"
+config/windows_native_icon="res://assets/v0id_icon.ico"
+
+[boot_splash]
+bg_color=Color(0.012, 0.012, 0.02, 1.0)
+image="res://assets/v0id_icon.svg"
+fullsize=true
+use_filter=true
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/mode=0
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[rendering]
+renderer/rendering_method="forward_plus"
+textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_2d=2
+anti_aliasing/quality/msaa_3d=2
