@@ -4,10 +4,10 @@
   "2": "NexusDB",
   "3": "index.js",
   "4": "package.json",
-  "5": "cli.js",
+  "5": "V0idAgent",
   "6": "game.ts",
   "7": "🌑 V0ID OS — BLUEPRINT MESTRE & ESPECIFICAÇÃO OFICIAL (v4.0 FINAL)",
-  "8": "🌑 V0ID OS — BLUEPRINT MESTRE & ESPECIFICAÇÃO OFICIAL (v4.0 FINAL)",
+  "8": "🌑 V0ID OS",
   "9": "ui-launcher/package.json",
   "10": "🌑 V0ID OS — SOUL (Identidade, Regras & Memória Evolutiva)",
   "11": "StudioView.tsx",
@@ -17,8 +17,5 @@
   "15": "next-env.d.ts",
   "16": "v0id_blender_addon.py",
   "18": "projetos/test/vault/README.md",
-  "19": "ref_node_path",
-  "22": "omni_router.test.js",
-  "23": "🌑 V0ID OS — LOG DE EVOLUÇÃO AUTÔNOMA E AUTO-CURA",
-  "24": "SCENES_INDEX.md"
+  "19": "v0id_token_budget_loop.mjs"
 }
