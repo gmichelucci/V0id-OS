@@ -26,6 +26,10 @@ yarn-debug.log*
 yarn-error.log*
 test_followup.mjs
 screenshots/temp_profile/
+.temp_edge_profile/
+v0id_loop.pid
+v0id_loop.stop
+loop_runner.log
 .system_generated/
 
 # Caches do Sistema e SQLite Runtime Locks

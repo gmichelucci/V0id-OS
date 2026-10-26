@@ -5,11 +5,12 @@
 
 import path from 'node:path';
 import fs from 'node:fs';
+import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 
 const V0ID_ROOT = process.cwd().toLowerCase().endsWith('ui-launcher') ? path.resolve(process.cwd(), '..') : process.cwd();
 const OUTPUT_DIR = path.join(V0ID_ROOT, 'docs', 'scenes');
-const TEMP_PROFILE_DIR = path.join(V0ID_ROOT, '.temp_edge_profile');
+const TEMP_PROFILE_DIR = path.join(os.tmpdir(), 'v0id_edge_profile');
 const EDGE_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 
 if (!fs.existsSync(OUTPUT_DIR)) {

@@ -360,15 +360,15 @@
     "semantic_hash": ""
   },
   "v0id_capture_scenes.mjs": {
-    "mtime": 1792995443.4006784,
-    "seen": 1792995460.2857828,
-    "ast_hash": "ef55c558e393e527ddd3317d08a93d9e",
+    "mtime": 1792995556.26162,
+    "seen": 1792995574.434064,
+    "ast_hash": "3cb6a60a6c86a094b1cb298ee0712540",
     "semantic_hash": ""
   },
   "EVOLUTION_LOG.md": {
-    "mtime": 1792994999.5236118,
-    "seen": 1792995102.6795194,
-    "ast_hash": "75b953b9ea15822413efc3ab085142e2",
+    "mtime": 1792995469.4929383,
+    "seen": 1792995495.9791121,
+    "ast_hash": "d3b0996e56c5b8a579e2964342014a21",
     "semantic_hash": ""
   },
   "docs/SCENES_INDEX.md": {
@@ -492,39 +492,9 @@
     "semantic_hash": ""
   },
   "v0id_token_budget_loop.mjs": {
-    "mtime": 1792995447.988556,
-    "seen": 1792995460.2857828,
-    "ast_hash": "22841f29a5f0ef7ee4fd597f1670b301",
-    "semantic_hash": ""
-  },
-  ".temp_edge_profile/Default/Blueprints/blueprint_presence_index.json": {
-    "mtime": 1792995447.6032865,
-    "seen": 1792995460.2852764,
-    "ast_hash": "7693fc868ad69a7bc13b005dd08cdf6d",
-    "semantic_hash": ""
-  },
-  ".temp_edge_profile/Default/DualEngine/SiteList-Consumer.json": {
-    "mtime": 1792995449.160292,
-    "seen": 1792995460.2852764,
-    "ast_hash": "99914b932bd37a50b983c5e7c90ae93b",
-    "semantic_hash": ""
-  },
-  ".temp_edge_profile/Default/DualEngine/SiteList-Enterprise.json": {
-    "mtime": 1792995449.153521,
-    "seen": 1792995460.2852764,
-    "ast_hash": "99914b932bd37a50b983c5e7c90ae93b",
-    "semantic_hash": ""
-  },
-  ".temp_edge_profile/Default/arbitration_service_config.json": {
-    "mtime": 1792995132.2919445,
-    "seen": 1792995391.2385375,
-    "ast_hash": "6f261a3b5c5b6d6254697284135a15a8",
-    "semantic_hash": ""
-  },
-  ".temp_edge_profile/extensions_crx_cache/metadata.json": {
-    "mtime": 1792995133.7659628,
-    "seen": 1792995391.2385375,
-    "ast_hash": "2aa9e263ee3796d9ce358460a2451b4c",
+    "mtime": 1792995480.3886337,
+    "seen": 1792995495.9791121,
+    "ast_hash": "e125b4e3497d3b0fbbd1867b704a7276",
     "semantic_hash": ""
   },
   "docs/scenes/test_shot.png": {

@@ -123,9 +123,10 @@ Responda com uma micro-análise técnica de saúde do sistema em 3 tópicos conc
   // 4. Verificação TypeScript
   logLive(`[4/5] Compilação TypeScript dos 14 Estúdios...`);
   try {
-    const tsRes = spawnSync('npx.cmd', ['tsc', '--noEmit'], {
+    const tsRes = spawnSync('npx', ['tsc', '--noEmit'], {
       cwd: path.join(V0ID_ROOT, 'ui-launcher'),
       encoding: 'utf8',
+      shell: true,
       timeout: 45000,
       windowsHide: true,
       stdio: 'pipe'
