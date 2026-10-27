@@ -108,12 +108,13 @@ export const tools = {
     const command = args.command || args.cmd;
     if (!command) throw new Error('run_command: parâmetro command ausente.');
     const cwd = process.cwd().toLowerCase().endsWith('ui-launcher') ? path.resolve(process.cwd(), '..') : process.cwd();
+    const isWindows = process.platform === 'win32';
     try {
       const raw = execSync(command, {
         cwd,
         encoding: 'utf8',
         timeout: args.timeoutMs || 45000,
-        shell: 'powershell.exe'
+        shell: isWindows ? 'powershell.exe' : '/bin/sh'
       });
       return compressOutput(raw, 40);
     } catch (err) {
