@@ -1,17 +1,17 @@
 # Graph Report - V0id  (2026-10-26)
 
 ## Corpus Check
-- 72 files · ~303,366 words
+- 72 files · ~318,775 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 17 file(s) not represented in the graph (top: .bat 4, .ico 3, .glb 2)
+- Unclassified: 16 file(s) not represented in the graph (top: .bat 4, .ico 3, .glb 2)
 
 ## Summary
-- 436 nodes · 681 edges · 22 communities (13 shown, 9 thin omitted)
+- 441 nodes · 686 edges · 21 communities (13 shown, 8 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 7 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `69f2abb4`
+- Built from commit: `d2ea9bf4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -21,7 +21,7 @@
 - NexusDB
 - index.js
 - package.json
-- cli.js
+- v0id_token_budget_loop.mjs
 - next
 - 🌑 V0ID OS — BLUEPRINT MESTRE & ESPECIFICAÇÃO OFICIAL (v4.0 FINAL)
 - 🌑 V0ID OS
@@ -30,14 +30,13 @@
 - StudioView.tsx
 - compilerOptions
 - v0id_blender_addon.py
-- EdgeCDPClient
 - projetos/test/vault/README.md
 - v0id_token_budget_loop.mjs
 - VISUAL_INSPECTION_REPORT.md
 - INTERACTIVE_TEST_REPORT.md
 
 ## God Nodes (most connected - your core abstractions)
-1. `🌑 V0ID OS — LOG DE EVOLUÇÃO AUTÔNOMA E AUTO-CURA` - 24 edges
+1. `🌑 V0ID OS — LOG DE EVOLUÇÃO AUTÔNOMA E AUTO-CURA` - 25 edges
 2. `NexusDB` - 23 edges
 3. `react` - 23 edges
 4. `StudioView()` - 18 edges
@@ -49,8 +48,8 @@
 10. `OmniRouter` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `runSingleCycle()` --calls--> `runInteractiveTest()`  [EXTRACTED]
-  v0id_token_budget_loop.mjs → v0id_interactive_tester.mjs
+- `runSingleCycle()` --calls--> `runSelfHealing()`  [EXTRACTED]
+  v0id_token_budget_loop.mjs → v0id_auto_healer.mjs
 - `StudioView()` --calls--> `BlackHoleIcon()`  [EXTRACTED]
   ui-launcher/components/StudioView.tsx → ui-launcher/components/icons/BlackHoleIcon.tsx
 - `StudioView()` --calls--> `AutoForgeView()`  [EXTRACTED]
@@ -63,35 +62,35 @@
 ## Import Cycles
 - None detected.
 
-## Communities (22 total, 9 thin omitted)
+## Communities (21 total, 8 thin omitted)
 
 ### Community 0 - "agent.test.js"
-Cohesion: 0.05
-Nodes (41): fastProviders, gatekeeper, logs, providers, rle, router, tier1, tier2 (+33 more)
+Cohesion: 0.06
+Nodes (27): agent, antiGhostAgent, bigText, checkpoint, cmdOut, compressed, diffContent, dirList (+19 more)
 
 ### Community 3 - "index.js"
-Cohesion: 0.19
-Nodes (9): loadEnv(), Gatekeeper, callAgyCli(), callGemini(), callOpenAICompatible(), isAgyAvailable(), RateLimitError, TOOL_DEFINITIONS (+1 more)
+Cohesion: 0.11
+Nodes (20): loadEnv(), Gatekeeper, fastProviders, gatekeeper, logs, providers, rle, router (+12 more)
 
 ### Community 4 - "package.json"
 Cohesion: 0.11
 Nodes (17): bin, v0id, dependencies, ws, description, name, scripts, capture (+9 more)
 
-### Community 5 - "cli.js"
-Cohesion: 0.15
-Nodes (6): V0idAgent, agent, rl, wsServer, V0idWSServer, ws
+### Community 5 - "v0id_token_budget_loop.mjs"
+Cohesion: 0.12
+Nodes (19): captureAllScenes(), OUTPUT_DIR, SCENES, TEMP_PROFILE_DIR, EdgeCDPClient, REPORT_FILE, runInteractiveTest(), appendLog() (+11 more)
 
 ### Community 6 - "next"
-Cohesion: 0.09
-Nodes (14): next, getRecentLogs(), handler(), isLoopRunning(), LOG_FILE, PID_FILE, RUNNER_LOG, STOP_FILE (+6 more)
+Cohesion: 0.10
+Nodes (12): next, getRecentLogs(), handler(), isLoopRunning(), LOG_FILE, PID_FILE, RUNNER_LOG, STOP_FILE (+4 more)
 
 ### Community 7 - "🌑 V0ID OS — BLUEPRINT MESTRE & ESPECIFICAÇÃO OFICIAL (v4.0 FINAL)"
 Cohesion: 0.22
 Nodes (8): 1. COMO O V0ID FUNCIONA (RESUMO EXECUTIVO EM 5 PASSOS), 2. DIAGRAMA GERAL UNIFICADO DO SISTEMA (v4.0), 3. DESENHO DAS TELAS: OS 16 APPS (PS5 UI) + OS ESTÚDIOS (3 COLUNAS), 4. ESTRUTURA MODULAR DE PASTAS (`c:\V0id\`), 5. PROMPT DE PARTIDA (PARA COLAR NO ANTIGRAVITY OU NO `agy` CLI), Tela 1: O Launcher Principal (Estilo PS5 / Apple TV), Tela 2: Interior de Qualquer Estúdio (As 3 Colunas), 🌑 V0ID OS — BLUEPRINT MESTRE & ESPECIFICAÇÃO OFICIAL (v4.0 FINAL)
 
 ### Community 8 - "🌑 V0ID OS"
-Cohesion: 0.06
-Nodes (32): 🌑 V0ID OS — MAPA VISUAL DAS CENAS E ESTÚDIOS, [CICLO DE AUDITORIA] 2026-10-26T02:37:26.445Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:06.270Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:52.445Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:09:59.521Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:17:49.491Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:23:42.644Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:26:12.239Z (+24 more)
+Cohesion: 0.05
+Nodes (37): 🌑 V0ID OS — MAPA VISUAL DAS CENAS E ESTÚDIOS, [CICLO DE AUDITORIA] 2026-10-26T02:37:26.445Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:06.270Z, [CICLO DE AUDITORIA] 2026-10-26T02:55:52.445Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:09:59.521Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:17:49.491Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:23:42.644Z, [CICLO DE EVOLUÇÃO CONTÍNUA] 2026-10-26T06:26:12.239Z (+29 more)
 
 ### Community 9 - "ui-launcher/package.json"
 Cohesion: 0.08
@@ -114,28 +113,28 @@ Cohesion: 0.14
 Nodes (5): optimize_and_export(), parse_args(), V0ID_OT_ExportGameModel, V0ID_OT_ExportOmniMediaRender, V0ID_PT_MainPanel
 
 ### Community 19 - "v0id_token_budget_loop.mjs"
-Cohesion: 0.06
-Nodes (45): allBuffers, dirEntries, header, htmlFile, multiIco, pngEntries, sizes, TEMP_DIR (+37 more)
+Cohesion: 0.05
+Nodes (39): compressOutput(), tools, DB_PATH, __dirname, nexus, foundHistory, hibState, nextTask (+31 more)
 
 ## Knowledge Gaps
 - **8 isolated node(s):** `speed`, `react-dom`, `@types/node`, `@types/react`, `autoprefixer` (+3 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 240 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 243 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `next` connect `next` to `StudioView.tsx`, `ui-launcher/package.json`, `v0id_token_budget_loop.mjs`?**
-  _High betweenness centrality (0.267) - this node is a cross-community bridge._
+  _High betweenness centrality (0.261) - this node is a cross-community bridge._
 - **What connects `speed`, `react-dom`, `@types/node` to the rest of the system?**
   _8 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `agent.test.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.050170068027210885 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06090808416389812 - nodes in this community are weakly interconnected._
 - **Why does `react` connect `StudioView.tsx` to `ui-launcher/package.json`, `next`?**
-  _High betweenness centrality (0.126) - this node is a cross-community bridge._
+  _High betweenness centrality (0.123) - this node is a cross-community bridge._
 - **Should `NexusDB` be split into smaller, more focused modules?**
   _Cohesion score 0.09486166007905138 - nodes in this community are weakly interconnected._
-- **Why does `NexusDB` connect `NexusDB` to `agent.test.js`?**
-  _High betweenness centrality (0.074) - this node is a cross-community bridge._
-- **Should `package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.1111111111111111 - nodes in this community are weakly interconnected._
+- **Why does `NexusDB` connect `NexusDB` to `v0id_token_budget_loop.mjs`?**
+  _High betweenness centrality (0.072) - this node is a cross-community bridge._
+- **Should `index.js` be split into smaller, more focused modules?**
+  _Cohesion score 0.1064102564102564 - nodes in this community are weakly interconnected._

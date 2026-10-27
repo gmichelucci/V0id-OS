@@ -165,18 +165,20 @@ export class OmniRouter {
 
   async route(userPrompt, options = {}) {
     // Stage 1: Gatekeeper & Prompt Improver (Triagem com custo zero ou Flash)
-    const gateResult = await this.gatekeeper.process(userPrompt, this.activeProject);
-    if (gateResult.isSimple && !options.forceComplex) {
-      this.onStatus?.(`[Gatekeeper] Pergunta simples resolvida no Gatekeeper (Flash Tier) a custo zero.`);
-      return {
-        text: gateResult.directResponse,
-        providerUsed: 'gatekeeper_flash',
-        tier: 'gatekeeper',
-        tokensSaved: true
-      };
+    let compiledPrompt = userPrompt;
+    if (options.promptImprover !== false) {
+      const gateResult = await this.gatekeeper.process(userPrompt, this.activeProject, options);
+      if (gateResult.isSimple && !options.forceComplex) {
+        this.onStatus?.(`[Gatekeeper] Pergunta simples resolvida no Gatekeeper (Flash Tier) a custo zero.`);
+        return {
+          text: gateResult.directResponse,
+          providerUsed: 'gatekeeper_flash',
+          tier: 'gatekeeper',
+          tokensSaved: true
+        };
+      }
+      compiledPrompt = gateResult.superPrompt || userPrompt;
     }
-
-    const compiledPrompt = gateResult.superPrompt || userPrompt;
     const systemPrompt = options.systemPrompt || 'Você é o V0id OS Core, o núcleo soberano do sistema operacional. Responda em português formal, claro, articulado e altamente técnico (nunca use linguagem infantil ou caricata como \"mim\").';
 
     // Check force agy

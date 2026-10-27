@@ -90,17 +90,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const agent = new V0idAgent({ activeProject: activeProj });
 
     // Monta o System Prompt de acordo com os Toggles ativos em tempo real
-    let systemPrompt = 'Você é o V0id OS Core, o núcleo de inteligência e orquestração do sistema operacional soberano V0id. Responda em português formal, fluido, analítico e de alto nível técnico, estruturando suas explicações de forma impecável.';
+    let systemPrompt = 'Você é o V0id OS Core, assistente técnico de engenharia de software e orquestrador supremo do sistema operacional soberano V0id. Responda em português formal, fluido, analítico e de alto nível técnico, estruturando suas explicações em Markdown com clareza impecável.';
+
+    // Injeção de Contexto Vivo do Sistema (como o Antigravity faz com o Workspace)
+    try {
+      const fsModule = await dynamicImport('node:fs');
+      const evolutionLogPath = path.resolve(process.cwd(), '../EVOLUTION_LOG.md');
+      if (fsModule.existsSync(evolutionLogPath)) {
+        const evoContent = fsModule.readFileSync(evolutionLogPath, 'utf8').trim();
+        const cycles = evoContent.split('### [CICLO DE EVOLUÇÃO CONTÍNUA]');
+        if (cycles.length > 1) {
+          const lastCycle = cycles[cycles.length - 1].trim().slice(0, 900);
+          systemPrompt += `\n\n--- [CONTEXTO VIVO DO SISTEMA: ÚLTIMO CICLO DE AUTO-MELHORIA REGISTRADO NO DISCO] ---\n${lastCycle}\n---------------------------------------------------------------------------------`;
+        }
+      }
+    } catch {}
 
     if (toggles?.cavemanMode) {
-      systemPrompt += ' Diretriz de concisão ativada: forneça respostas diretas, cirúrgicas e sem preâmbulos, focando estritamente na informação solicitada (sempre em português gramaticalmente correto, NUNCA use linguagem quebrada, infantil ou caricata como "mim").';
+      systemPrompt += '\nDiretriz de concisão extrema: forneça respostas diretas e cirúrgicas sem preâmbulos.';
     } else {
-      systemPrompt += ' Responda com clareza, eloquência e detalhamento técnico completo, apresentando soluções bem desenvolvidas e explicando os conceitos com precisão.';
+      systemPrompt += '\nResponda com clareza, eloquência e detalhamento técnico completo, apresentando soluções bem desenvolvidas e explicando os conceitos com precisão.';
     }
 
     if (toggles?.ponytail) {
       systemPrompt += ' Adote a postura Ponytail (engenharia sênior pragmática: soluções limpas, menor código necessário, sem abstrações inúteis).';
     }
+
+    systemPrompt += '\nVocê tem ferramentas para ler arquivos (read_file), listar pastas (list_dir) e rodar comandos (run_command). Se a dúvida do usuário depender de dados específicos do código ou arquivos, utilize essas ferramentas.';
 
     // Processa arquivos anexados e anexa ao prompt do usuário
     let fullUserPrompt = message;
@@ -174,7 +190,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       systemPrompt,
       history: previousHistory,
       uncensored: toggles?.uncensoredMode,
-      forceAgy: toggles?.forceAgy
+      forceAgy: toggles?.forceAgy,
+      promptImprover: toggles?.promptImprover !== false,
+      cavemanMode: toggles?.cavemanMode === true,
+      ponytail: toggles?.ponytail !== false
     });
 
     let text = response.text || '';
@@ -232,6 +251,18 @@ Não invoque novas ferramentas. Responda em texto claro, técnico e executivo co
       } catch (err: any) {
         console.error('Erro na síntese da resposta com ferramentas:', err.message);
       }
+    } else if (isOnlyToolJson && !/json/i.test(message)) {
+      // Se o modelo respondeu exclusivamente em bloco JSON sem ter sido pedido JSON, converte em Markdown analítico elegante
+      try {
+        const rawJson = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+        const parsed = JSON.parse(rawJson);
+        let formattedMd = '### 📊 Resumo Executivo das Ações:\n\n';
+        for (const [k, v] of Object.entries(parsed)) {
+          const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          formattedMd += `- **${label}:** ${typeof v === 'object' ? JSON.stringify(v) : v}\n`;
+        }
+        text = formattedMd;
+      } catch {}
     }
 
     // Salva a resposta do assistente no banco SQLite persistente vinculada à sessão

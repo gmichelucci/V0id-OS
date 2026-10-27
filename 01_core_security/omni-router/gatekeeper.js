@@ -84,8 +84,25 @@ export class Gatekeeper {
     return null;
   }
 
-  compileSuperPrompt(userPrompt, activeProject = 'Space Tide') {
-    const isCaveman = true;
+  compileSuperPrompt(userPrompt, activeProject = 'Space Tide', options = {}) {
+    const isCaveman = options.cavemanMode === true;
+    const isPonytail = options.ponytail !== false;
+
+    if (!isCaveman) {
+      return `[V0ID COGNITIVE ENHANCED PROMPT]
+PROJETO ATIVO: ${activeProject}
+DIRETRIZ DE IDENTIDADE & ENGENHARIA (PADRÃO ANTIGRAVITY):
+- Você é o V0id OS Core, assistente técnico de engenharia de software e orquestrador supremo.
+- Responda em texto corrido, fluido, articulado e altamente analítico em português, formatado em Markdown rico (tópicos, negrito, listas).
+- NUNCA responda apenas com um bloco JSON ou código solto sem explicação, a menos que o usuário peça explicitamente formato JSON.
+- Apresente explicações detalhadas e contextuais respondendo com precisão à pergunta do usuário.
+${isPonytail ? '- Adote a postura Ponytail (engenharia pragmática e objetiva).' : ''}
+- Se a pergunta envolver o status do sistema, histórico ou arquivos, fundamente-se nos dados reais do sistema.
+
+OBJETIVO DO USUÁRIO:
+${userPrompt.trim()}
+`;
+    }
 
     return `[V0ID AUTO-COMPILED SUPER-PROMPT | CAVE-MAN MODE]
 PROJETO ATIVO: ${activeProject}
@@ -98,11 +115,11 @@ OBJETIVO DO USUÁRIO:
 ${userPrompt.trim()}
 
 DIRETRIZ DE SAÍDA:
-${isCaveman ? 'Responda no formato Caveman direto: Apenas blocos de código completos, ferramentas executáveis e resultado final.' : 'Responda tecnicamente de forma concisa.'}
+Responda no formato Caveman direto: Apenas blocos de código completos, ferramentas executáveis e resultado final.
 `;
   }
 
-  async process(input, activeProject = 'Space Tide') {
+  async process(input, activeProject = 'Space Tide', options = {}) {
     if (this.isSimpleQuery(input)) {
       return {
         isSimple: true,
@@ -112,7 +129,7 @@ ${isCaveman ? 'Responda no formato Caveman direto: Apenas blocos de código comp
       };
     }
 
-    const superPrompt = this.compileSuperPrompt(input, activeProject);
+    const superPrompt = this.compileSuperPrompt(input, activeProject, options);
     return {
       isSimple: false,
       directResponse: null,
