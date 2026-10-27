@@ -3,9 +3,23 @@ import { exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
-// Helper to locate Blender on Windows
+import { execSync } from 'child_process';
+
+// Helper to locate Blender
 function findBlenderPath(): string | null {
+  if (process.platform === 'linux' || process.platform === 'darwin') {
+    try {
+      const p = execSync('which blender', { encoding: 'utf8' }).trim();
+      if (p && fs.existsSync(p)) return p;
+    } catch (e) {
+      // Ignorar e checar os caminhos estáticos
+    }
+  }
+
   const commonPaths = [
+    '/usr/bin/blender',
+    '/usr/local/bin/blender',
+    '/opt/blender/blender',
     'C:\\Program Files\\Blender Foundation\\Blender 4.3\\blender.exe',
     'C:\\Program Files\\Blender Foundation\\Blender 4.2\\blender.exe',
     'C:\\Program Files\\Blender Foundation\\Blender 4.1\\blender.exe',
