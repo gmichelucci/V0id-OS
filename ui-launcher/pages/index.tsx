@@ -175,6 +175,7 @@ export default function LauncherPage() {
   const [newProjName, setNewProjName] = useState('');
   const [newProjDesc, setNewProjDesc] = useState('');
   const [newProjType, setNewProjType] = useState('git');
+  const [newProjLocalPath, setNewProjLocalPath] = useState('');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -456,7 +457,8 @@ export default function LauncherPage() {
         body: JSON.stringify({
           name: newProjName.trim(),
           description: newProjDesc.trim(),
-          type: newProjType
+          type: newProjType,
+          localPath: newProjType === 'local' ? newProjLocalPath.trim() : ''
         })
       });
       const data = await res.json();
@@ -812,6 +814,21 @@ export default function LauncherPage() {
                   <option value="local">💾 Apenas Local (Sem Nuvem)</option>
                 </select>
               </div>
+
+              {newProjType === 'local' && (
+                <div>
+                  <label className="text-[11px] font-bold text-gray-300 block mb-1">
+                    Caminho Local (opcional, ex: C:\Projetos\MeuRepo):
+                  </label>
+                  <input
+                    type="text"
+                    value={newProjLocalPath}
+                    onChange={e => setNewProjLocalPath(e.target.value)}
+                    placeholder="Deixe em branco para usar o padrão c:\V0id\projetos\"
+                    className="w-full bg-[#050508] border border-[#232334] rounded-xl px-3.5 py-2 text-xs text-gray-100 outline-none focus:border-amber-500"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="text-[11px] font-bold text-gray-300 block mb-1">
