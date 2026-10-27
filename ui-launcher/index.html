@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V0ID OS - Chat Interface</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --panel: #1a1a1a;
+            --text: #e0e0e0;
+            --accent: #00ff41;
+            --user-msg: #2a2a2a;
+            --bot-msg: #1e1e1e;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .msg {
+            max-width: 80%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            position: relative;
+            line-height: 1.5;
+            word-wrap: break-word;
+            user-select: text; /* Permite selecionar texto */
+        }
+        .msg pre {
+            white-space: pre-wrap;
+            margin: 0;
+        }
+        .assistant {
+            align-self: flex-start;
+            background-color: var(--bot-msg);
+            border-left: 4px solid var(--accent);
+        }
+        .user {
+            align-self: flex-end;
+            background-color: var(--user-msg);
+            border-right: 4px solid #4a90e2;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .msg:hover .actions {
+            opacity: 1;
+        }
+        .btn-action {
+            background: none;
+            border: 1px solid #444;
+            color: var(--text);
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-action:hover {
+            background: #333;
+            border-color: var(--accent);
+        }
+        #input-area {
+            padding: 20px;
+            background: var(--panel);
+            display: flex;
+            gap: 10px;
+        }
+        textarea {
+            flex: 1;
+            background: #000;
+            color: var(--accent);
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 4px;
+            resize: none;
+            outline: none;
+        }
+        .edit-area {
+            width: 100%;
+            background: #000;
+            color: #fff;
+            border: 1px solid var(--accent);
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container"></div>
+    <div id="input-area">
+        <textarea id="user-input" placeholder="Digite seu comando..." rows="2"></textarea>
+    </div>
+
+    <script>
+        const container = document.getElementById('chat-container');
+        const input = document.getElementById('user-input');
+
+        function addMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            
+            const content = document.createElement('div');
+            content.className = 'content';
+            content.innerHTML = `<pre>${text}</pre>`;
+            div.appendChild(content);
+
+            const actions = document.createElement('div');
+            actions.className = 'actions';
+
+            // Botão Copiar
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'btn-action';
+            copyBtn.innerText = 'Copiar';
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(text);
+                copyBtn.innerText = 'Copiado!';
+                setTimeout(() => copyBtn.innerText = 'Copiar', 2000);
+            };
+            actions.appendChild(copyBtn);
+
+            // Botão Editar (apenas para o usuário)
+            if (role === 'user') {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn-action';
+                editBtn.innerText = 'Editar';
+                editBtn.onclick = () => startEdit(div, content, text);
+                actions.appendChild(editBtn);
+            }
+
+            div.appendChild(actions);
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function startEdit(msgDiv, contentDiv, oldText) {
+            const originalHTML = contentDiv.innerHTML;
+            const originalActions = msgDiv.querySelector('.actions').innerHTML;
+            
+            contentDiv.innerHTML = `<textarea class="edit-area" rows="3">${oldText}</textarea>`;
+            const actions = msgDiv.querySelector('.actions');
+            actions.innerHTML = `
+                <button class="btn-action" id="save-edit">Salvar</button>
+                <button class="btn-action" id="cancel-edit">Cancelar</button>
+            `;
+
+            actions.querySelector('#save-edit').onclick = () => {
+                const newText = contentDiv.querySelector('textarea').value;
+                contentDiv.innerHTML = `<pre>${newText}</pre>`;
+                resetActions(msgDiv, newText);
+            };
+
+            actions.querySelector('#cancel-edit').onclick = () => {
+                contentDiv.innerHTML = originalHTML;
+                resetActions(msgDiv, oldText);
+            };
+        }
+
+        function resetActions(msgDiv, text) {
+            const actions = msgDiv.querySelector('.actions');
+            actions.innerHTML = '';
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'btn-action';
+            copyBtn.innerText = 'Copiar';
+            copyBtn.onclick = () => navigator.clipboard.writeText(text);
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn-action';
+            editBtn.innerText = 'Editar';
+            editBtn.onclick = () => startEdit(msgDiv, msgDiv.querySelector('.content'), text);
+            
+            actions.appendChild(copyBtn);
+            actions.appendChild(editBtn);
+        }
+
+        // Exemplos iniciais
+        addMessage('assistant', 'V0id OS Core Online. Sistema pronto para execução.');
+        addMessage('user', 'Listar arquivos do diretório core.');
+    </script>
+</body>
+</html>
