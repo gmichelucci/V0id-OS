@@ -34,7 +34,7 @@ export class V0idAgent {
   }
 
   // Parse tool blocks from model output with multi-pattern fallback
-  parseTools(text = '', nativeCalls = []) {
+  parseTools(text = '', nativeCalls = [], options = {}) {
     const calls = [];
     const seen = new Set();
 
@@ -101,17 +101,16 @@ export class V0idAgent {
     }
 
     // 5. Pattern: Code blocks annotated with filepath (Markdown Ghost-Write Rescue)
-    // Matches e.g.:
-    // ```html filepath=ui-launcher/index.html ... ```
-    // or // filepath: ui-launcher/app.js inside code block
-    // or ### File: ui-launcher/index.html followed by code block
-    const fileBlockRegex = /(?:###?\s*(?:File|Arquivo):\s*[`\*]?([a-zA-Z0-9_\-\.\/\\ ]+\.[a-zA-Z0-9]+)[`\*]?\s*\n+```[a-zA-Z0-9_\-]*\n([\s\S]*?)```|```[a-zA-Z0-9_\-]*\s+(?:file(?:path)?|path)=([a-zA-Z0-9_\-\.\/\\ ]+)\n([\s\S]*?)```|```[a-zA-Z0-9_\-]*\n(?:\/\/|#|<!--)\s*(?:file(?:path)?|path):\s*([a-zA-Z0-9_\-\.\/\\ ]+)(?:-->)?\n([\s\S]*?)```)/gi;
+    // Apenas no modo autopilot de execução contínua, nunca no chat conversacional
+    if (options.allowGhostWrite === true) {
+      const fileBlockRegex = /(?:###?\s*(?:File|Arquivo):\s*[`\*]?([a-zA-Z0-9_\-\.\/\\ ]+\.[a-zA-Z0-9]+)[`\*]?\s*\n+```[a-zA-Z0-9_\-]*\n([\s\S]*?)```|```[a-zA-Z0-9_\-]*\s+(?:file(?:path)?|path)=([a-zA-Z0-9_\-\.\/\\ ]+)\n([\s\S]*?)```|```[a-zA-Z0-9_\-]*\n(?:\/\/|#|<!--)\s*(?:file(?:path)?|path):\s*([a-zA-Z0-9_\-\.\/\\ ]+)(?:-->)?\n([\s\S]*?)```)/gi;
 
-    for (const match of text.matchAll(fileBlockRegex)) {
-      const filePath = (match[1] || match[3] || match[5] || '').trim();
-      const content = match[2] || match[4] || match[6] || '';
-      if (filePath && content) {
-        addCall('write_file', { filePath, content });
+      for (const match of text.matchAll(fileBlockRegex)) {
+        const filePath = (match[1] || match[3] || match[5] || '').trim();
+        const content = match[2] || match[4] || match[6] || '';
+        if (filePath && content) {
+          addCall('write_file', { filePath, content });
+        }
       }
     }
 
@@ -231,7 +230,7 @@ Você NÃO invocou nenhuma ferramenta real no disco. Use OBRIGATORIAMENTE write_
           });
 
           // Multi-source tool resolution: native tool_calls + robust text parser
-          const toolCalls = this.parseTools(response.text, response.toolCalls);
+          const toolCalls = this.parseTools(response.text, response.toolCalls, { allowGhostWrite: true });
 
           if (toolCalls.length === 0) {
             // GHOST WRITE DETECTED: Model replied with text only!

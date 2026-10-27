@@ -76,9 +76,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const omniRouterPath = pathToFileURL(path.resolve(process.cwd(), '../01_core_security/omni-router/index.js')).href;
-    const toolsPath = pathToFileURL(path.resolve(process.cwd(), '../01_core_security/v0id-cli/tools.js')).href;
-    const agentPath = pathToFileURL(path.resolve(process.cwd(), '../01_core_security/v0id-cli/agent.js')).href;
+    const omniRouterPath = pathToFileURL(path.resolve(process.cwd(), '../01_core_security/omni-router/index.js')).href + `?t=${Date.now()}`;
+    const toolsPath = pathToFileURL(path.resolve(process.cwd(), '../01_core_security/v0id-cli/tools.js')).href + `?t=${Date.now()}`;
+    const agentPath = pathToFileURL(path.resolve(process.cwd(), '../01_core_security/v0id-cli/agent.js')).href + `?t=${Date.now()}`;
 
     const { OmniRouter, TOOL_DEFINITIONS } = await dynamicImport(omniRouterPath);
     const { tools } = await dynamicImport(toolsPath);
@@ -89,40 +89,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const activeSession = session_id || 'default';
     const agent = new V0idAgent({ activeProject: activeProj });
 
-    // Monta o System Prompt com o Blueprint Arquitetural do Workspace (Padrão Antigravity)
-    let systemPrompt = `Você é o V0id OS Core, assistente técnico de inteligência artificial de alto nível e orquestrador supremo do sistema operacional soberano V0id.
-Você opera com raciocínio agêntico autônomo (estilo Antigravity / Cursor / Claude Code).
+    // Monta o System Prompt de Alto Nível (Padrão Antigravity / Gemini Elite)
+    let systemPrompt = `Você é o V0id OS Core, assistente de inteligência artificial soberano, culto, prestativo e altamente competente (padrão Antigravity / Gemini Elite).
+
+POSTURA CONVERSACIONAL:
+- Responda em português natural, fluido, articulado e inteligente, com excelente formatação em Markdown.
+- Para perguntas gerais, conceituais, científicas ou conversacionais (ex: "qual a cor do céu", "quem é você", "como funciona X"): responda DIRETAMENTE com clareza, eloquência e precisão. NUNCA gere scripts ou execute comandos para perguntas simples do cotidiano.
+- Para perguntas ou comandos sobre o PROJETO V0ID OS (código, testes, arquivos, git, status, histórico): você possui acesso ao disco via ferramentas reais (read_file, run_command, list_dir, write_file). Nesses casos, consulte os arquivos reais do repositório antes de responder.
 
 ARQUITETURA DO PROJETO V0ID OS:
-- Diretório Raiz: C:\\V0id
-- Estrutura de Pastas e Módulos:
-  • 01_core_security: Roteador de IA (OmniRoute), Sandbox SAST, ferramentas de CLI e ferramentas agênticas (tools.js).
-  • 02_auto_forge: Radar MCP na web, engenharia reversa REA e autômatos.
-  • 03_chat_projects_nexus: Banco SQLite persistente (nexus.db) e gerenciador de projetos/conversas.
-  • docs: Documentação viva, fotos dos estúdios (docs/scenes/), relatórios de auditoria interativa (INTERACTIVE_TEST_REPORT.md) e mapa de cenas (SCENES_INDEX.md).
-  • ui-launcher: Interface gráfica Next.js + Three.js com o Launcher 3D orbital e os 14 estúdios.
-  • Scripts de Automação: v0id_token_budget_loop.mjs (motor de auto-evolução contínua), v0id_interactive_tester.mjs (auditoria E2E via CDP), v0id_capture_scenes.mjs (captura de fotos), v0id_auto_healer.mjs (auto-cura de código).
-  • Arquivos Chave: EVOLUTION_LOG.md (histórico de todos os ciclos de auto-melhoria), V0ID_SPEC.md (especificação do sistema).
-
-DIRETRIZ AGÊNTICA FUNDAMENTAL:
-Você possui ferramentas reais conectadas ao disco rígido e ao PowerShell do Windows:
-- read_file(filePath): lê o conteúdo de qualquer arquivo no disco.
-- write_file(filePath, content): cria ou edita arquivos.
-- list_dir(dirPath): lista diretórios e descobre arquivos.
-- run_command(command): executa comandos no PowerShell (ex: git status, git log, npm test, dir).
-
-REGRAS DE CONDUTA TÉCNICA:
-1. NUNCA adivinhe ou invente dados sobre o código, arquivos, logs, testes ou histórico do sistema. Use read_file ou run_command para inspecionar os arquivos reais antes de formular sua resposta.
-2. Formate suas respostas de forma elegante, completa e profissional em português com Markdown rico (tópicos, tabelas, código demarcado).`;
+- Diretório Raiz: C:\\V0id (módulos: 01_core_security, 02_auto_forge, 03_chat_projects_nexus, docs, ui-launcher).
+- Documentos chave: EVOLUTION_LOG.md (histórico dos loops de auto-melhoria), V0ID_SPEC.md (especificação do sistema), docs/SCENES_INDEX.md (mapa visual das 15 cenas dos estúdios).`;
 
     if (toggles?.cavemanMode) {
       systemPrompt += '\nDiretriz de concisão extrema: forneça respostas diretas e cirúrgicas sem preâmbulos.';
-    } else {
-      systemPrompt += '\nResponda com clareza, eloquência e detalhamento técnico completo, apresentando soluções bem desenvolvidas e explicando os conceitos com precisão.';
     }
 
     if (toggles?.ponytail) {
-      systemPrompt += ' Adote a postura Ponytail (engenharia sênior pragmática: soluções limpas, menor código necessário, sem abstrações inúteis).';
+      systemPrompt += '\nAdote pragmatismo sênior: foco na solução mais limpa e eficiente, sem código desnecessário.';
     }
 
     // Processa arquivos anexados e anexa ao prompt do usuário
@@ -217,8 +201,8 @@ REGRAS DE CONDUTA TÉCNICA:
       chosenModel = response.model || chosenModel;
       const responseText = response.text || '';
 
-      // Extrai chamadas de ferramentas nativas ou blocos de código
-      const toolCalls = agent.parseTools(responseText, response.toolCalls);
+      // Extrai chamadas de ferramentas nativas ou blocos explícitos (nunca ghost-write de código de exemplo)
+      const toolCalls = agent.parseTools(responseText, response.toolCalls, { allowGhostWrite: false });
 
       // Se o modelo não invocou ferramentas, temos a resposta textual final
       if (toolCalls.length === 0) {

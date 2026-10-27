@@ -39,7 +39,7 @@ export class OmniRouter {
     }
 
     // =========================================================================
-    // 1º TITULAR (ELITE): Modelos Pro/Argon + agy CLI (Claude Opus/Sonnet / Argon)
+    // 1º TITULAR (ELITE & ALTA INTELIGÊNCIA): Gemini Pro & Gemini 3.5 Flash
     // =========================================================================
     if (isAgyAvailable() || options.forceAgy) {
       list.push({
@@ -52,7 +52,7 @@ export class OmniRouter {
 
     if (geminiKeys.length > 0) {
       geminiKeys.forEach((key, idx) => {
-        // 1º Titular: Pro
+        // Titular 1: Gemini 3.1 Pro Preview (Elite Reasoning)
         list.push({
           id: `gemini_pro_${idx}`,
           name: `Gemini 3.1 Pro (Elite) [Key ${idx + 1}]`,
@@ -61,17 +61,50 @@ export class OmniRouter {
           key,
           model: 'gemini-3.1-pro-preview'
         });
+        // Titular 2: Gemini 3.5 Flash (Super Inteligente, Fluido & Alta Cota)
+        list.push({
+          id: `gemini_flash35_${idx}`,
+          name: `Gemini 3.5 Flash (Ultra-Inteligente) [Key ${idx + 1}]`,
+          tier: 1,
+          type: 'gemini',
+          key,
+          model: 'gemini-3.5-flash'
+        });
       });
     }
 
     // =========================================================================
-    // 2º RESERVA PESADO (120B ULTRA-FAST): Cerebras e Groq
+    // 2º RESERVA COGNITIVA: Gemini 3.8 Flash & Gemini 3 Flash Preview
+    // =========================================================================
+    if (geminiKeys.length > 0) {
+      geminiKeys.forEach((key, idx) => {
+        list.push({
+          id: `gemini_flash38_${idx}`,
+          name: `Gemini 3.8 Flash (Alta Disp.) [Key ${idx + 1}]`,
+          tier: 2,
+          type: 'gemini',
+          key,
+          model: 'gemini-3.8-flash'
+        });
+        list.push({
+          id: `gemini_flash30_${idx}`,
+          name: `Gemini 3 Flash Preview [Key ${idx + 1}]`,
+          tier: 2,
+          type: 'gemini',
+          key,
+          model: 'gemini-3-flash-preview'
+        });
+      });
+    }
+
+    // =========================================================================
+    // 3º RESERVA DE VELOCIDADE (120B ULTRA-FAST): Cerebras e Groq
     // =========================================================================
     if (process.env.CEREBRAS_API_KEY) {
       list.push({
         id: 'cerebras_120b',
         name: 'Cerebras (120B Ultra-Fast)',
-        tier: 2,
+        tier: 3,
         type: 'openai_compatible',
         baseUrl: 'https://api.cerebras.ai/v1',
         key: process.env.CEREBRAS_API_KEY,
@@ -83,43 +116,11 @@ export class OmniRouter {
       list.push({
         id: 'groq_120b',
         name: 'Groq (120B Fast Llama)',
-        tier: 2,
+        tier: 3,
         type: 'openai_compatible',
         baseUrl: 'https://api.groq.com/openai/v1',
         key: process.env.GROQ_API_KEY,
         model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
-      });
-    }
-
-    // =========================================================================
-    // 3º RESERVA DE ALTA DISPONIBILIDADE: Gemini 3.5 Flash / 3 Flash Preview / 3.8
-    // =========================================================================
-    if (geminiKeys.length > 0) {
-      geminiKeys.forEach((key, idx) => {
-        list.push({
-          id: `gemini_flash35_${idx}`,
-          name: `Gemini 3.5 Flash (Ultra-Rápido) [Key ${idx + 1}]`,
-          tier: 3,
-          type: 'gemini',
-          key,
-          model: 'gemini-3.5-flash'
-        });
-        list.push({
-          id: `gemini_flash30_${idx}`,
-          name: `Gemini 3 Flash Preview [Key ${idx + 1}]`,
-          tier: 3,
-          type: 'gemini',
-          key,
-          model: 'gemini-3-flash-preview'
-        });
-        list.push({
-          id: `gemini_flash38_${idx}`,
-          name: `Gemini 3.8 Flash (Alta Disp.) [Key ${idx + 1}]`,
-          tier: 3,
-          type: 'gemini',
-          key,
-          model: 'gemini-3.8-flash'
-        });
       });
     }
 

@@ -6,9 +6,9 @@
     "semantic_hash": ""
   },
   "01_core_security/omni-router/gatekeeper.js": {
-    "mtime": 1793062473.2441866,
-    "seen": 1793062528.5032876,
-    "ast_hash": "439706a25f80c38206d29ba332f624e5",
+    "mtime": 1793063955.4500172,
+    "seen": 1793064225.062643,
+    "ast_hash": "0387d936dbed4a766d2d417df943b0b4",
     "semantic_hash": ""
   },
   "01_core_security/omni-router/index.js": {
@@ -24,21 +24,21 @@
     "semantic_hash": ""
   },
   "01_core_security/omni-router/providers.js": {
-    "mtime": 1793062375.1739395,
-    "seen": 1793062528.5032876,
-    "ast_hash": "207115e6d7ee828427e33a965419aee7",
+    "mtime": 1793063904.2503095,
+    "seen": 1793064225.062643,
+    "ast_hash": "2cf96e75c7fec6945d25e8573b074494",
     "semantic_hash": ""
   },
   "01_core_security/omni-router/router.js": {
-    "mtime": 1793062382.1073203,
-    "seen": 1793062528.5032876,
-    "ast_hash": "526cfd973e87cc15d8d95fd02f6f0311",
+    "mtime": 1793063930.1409283,
+    "seen": 1793064225.062643,
+    "ast_hash": "aaf92fd2da116274977e81d574b47389",
     "semantic_hash": ""
   },
   "01_core_security/v0id-cli/agent.js": {
-    "mtime": 1792911218.2481892,
-    "seen": 1792911412.3147025,
-    "ast_hash": "dcef684111901e7fa47d98e477dffd40",
+    "mtime": 1793064018.8809502,
+    "seen": 1793064225.062643,
+    "ast_hash": "72c13a8417064e1545274f6e6ccf437d",
     "semantic_hash": ""
   },
   "01_core_security/v0id-cli/agent.test.js": {
@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/chat.ts": {
-    "mtime": 1793063435.944202,
-    "seen": 1793063482.6652741,
-    "ast_hash": "7f87db6bdb646d3bd32891332f00457e",
+    "mtime": 1793064117.988598,
+    "seen": 1793064225.062643,
+    "ast_hash": "497a914237b7b1dc29a10c12414056f2",
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/files.ts": {

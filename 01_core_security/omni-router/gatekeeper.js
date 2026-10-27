@@ -22,9 +22,7 @@ export class Gatekeeper {
 
   isSimpleQuery(text) {
     const t = text.trim().toLowerCase();
-    if (t.length < 25) return true;
-    if (/^(oi|ola|status|help|ajuda|quem e voce|ping|version|versao)$/i.test(t)) return true;
-    return false;
+    return /^(oi|ola|ping)$/i.test(t);
   }
 
   getFastTierProviders() {
@@ -86,37 +84,15 @@ export class Gatekeeper {
 
   compileSuperPrompt(userPrompt, activeProject = 'Space Tide', options = {}) {
     const isCaveman = options.cavemanMode === true;
-    const isPonytail = options.ponytail !== false;
 
-    if (!isCaveman) {
-      return `[V0ID COGNITIVE ENHANCED PROMPT]
-PROJETO ATIVO: ${activeProject}
-DIRETRIZ DE IDENTIDADE & ENGENHARIA (PADRÃO ANTIGRAVITY):
-- Você é o V0id OS Core, assistente técnico de engenharia de software e orquestrador supremo.
-- Responda em texto corrido, fluido, articulado e altamente analítico em português, formatado em Markdown rico (tópicos, negrito, listas).
-- NUNCA responda apenas com um bloco JSON ou código solto sem explicação, a menos que o usuário peça explicitamente formato JSON.
-- Apresente explicações detalhadas e contextuais respondendo com precisão à pergunta do usuário.
-${isPonytail ? '- Adote a postura Ponytail (engenharia pragmática e objetiva).' : ''}
-- Se a pergunta envolver o status do sistema, histórico ou arquivos, fundamente-se nos dados reais do sistema.
-
-OBJETIVO DO USUÁRIO:
-${userPrompt.trim()}
-`;
+    if (isCaveman) {
+      return `[V0ID CAVE-MAN MODE]
+Economia extrema de tokens. Responda de forma cirúrgica, concisa e direta, sem cumprimentos:
+${userPrompt.trim()}`;
     }
 
-    return `[V0ID AUTO-COMPILED SUPER-PROMPT | CAVE-MAN MODE]
-PROJETO ATIVO: ${activeProject}
-REGRAS DO SOUL.MD:
-- Economia extrema de tokens. Zero conversa fiada.
-- Código 100% funcional, completo e testável.
-- Padrão [APPROVED_GOLD]: Validação com saída de terminal real.
-
-OBJETIVO DO USUÁRIO:
-${userPrompt.trim()}
-
-DIRETRIZ DE SAÍDA:
-Responda no formato Caveman direto: Apenas blocos de código completos, ferramentas executáveis e resultado final.
-`;
+    // No modo normal (inteligência de alto nível), preserva a pergunta natural do usuário
+    return userPrompt.trim();
   }
 
   async process(input, activeProject = 'Space Tide', options = {}) {

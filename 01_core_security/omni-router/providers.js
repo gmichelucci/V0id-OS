@@ -264,29 +264,17 @@ export async function callOpenAICompatible(providerName, baseUrl, apiKey, model,
 
 export function isAgyAvailable() {
   try {
-    execSync('where.exe agy', { stdio: 'ignore' });
+    execSync('agy --version', { stdio: 'ignore' });
     return true;
   } catch {
-    try {
-      execSync('where.exe agy-node', { stdio: 'ignore' });
-      return true;
-    } catch {
-      return false;
-    }
+    return false;
   }
 }
 
 export function callAgyCli(prompt) {
-  let bin = 'agy';
-  try {
-    execSync('where.exe agy', { stdio: 'ignore' });
-  } catch {
-    bin = 'agy-node';
-  }
-
   try {
     const sanitized = prompt.replace(/"/g, '\\"');
-    const out = execSync(`${bin} -p "${sanitized}"`, { encoding: 'utf8', timeout: 60000 });
+    const out = execSync(`agy -p "${sanitized}"`, { encoding: 'utf8', timeout: 60000 });
     return { text: out.trim(), toolCalls: [] };
   } catch (err) {
     throw new Error(`agy CLI execution failed: ${err.message}`);
