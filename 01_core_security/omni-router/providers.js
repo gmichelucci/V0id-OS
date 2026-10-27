@@ -280,3 +280,13 @@ export function callAgyCli(prompt) {
     throw new Error(`agy CLI execution failed: ${err.message}`);
   }
 }
+
+export async function callJules(prompt) {
+  // Simula uma resposta do agente remoto "Jules" conectado ao GitHub.
+  // Em uma aplicação real, faria um fetch() para o backend em nuvem do Jules.
+  await new Promise(r => setTimeout(r, 800));
+  return {
+    text: "Olá! Sou o Jules na Nuvem. Aciono comandos git (clone, commit, push, PR) remotamente via API sem interagir com seu disco rígido local. \n\nCompreendi sua requisição: `" + prompt.substring(0, 100) + (prompt.length > 100 ? "..." : "") + "`\n\nEstou processando isso no repositório remoto via GitHub API.",
+    toolCalls: []
+  };
+}

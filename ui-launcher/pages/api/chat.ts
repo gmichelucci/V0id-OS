@@ -70,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
-  const { message, project, toggles, session_id, attachments } = req.body;
+  const { message, project, toggles, session_id, attachments, chatMode } = req.body;
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'Mensagem vazia' });
   }
@@ -186,14 +186,15 @@ ARQUITETURA DO PROJETO V0ID OS:
     for (let turn = 0; turn < 3; turn++) {
       const response = await router.route(currentPrompt, {
         forceComplex: true,
-        tools: TOOL_DEFINITIONS,
-        systemPrompt,
+        tools: chatMode === 'nuvem' ? [] : TOOL_DEFINITIONS,
+        systemPrompt: chatMode === 'nuvem' ? "Você é o agente Jules na nuvem, conectado remotamente ao GitHub. Como você não possui acesso ao disco local, execute apenas comandos git e operações remotas (clone, commit, push, PR) respondendo textualmente sobre suas ações. Seja extremamente eficiente e assuma o controle do fluxo git remoto. Aja como um integrador remoto." : systemPrompt,
         history: previousHistory,
         uncensored: toggles?.uncensoredMode,
         forceAgy: toggles?.forceAgy,
         promptImprover: toggles?.promptImprover !== false,
         cavemanMode: toggles?.cavemanMode === true,
-        ponytail: toggles?.ponytail !== false
+        ponytail: toggles?.ponytail !== false,
+        chatMode
       });
 
       chosenProvider = response.providerUsed || chosenProvider;

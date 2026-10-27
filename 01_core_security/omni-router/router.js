@@ -1,6 +1,6 @@
 // OmniRouter - Multi-LLM Automatic Rotation with Rate-Limit Hibernation Engine
 import { loadEnv } from './env_loader.js';
-import { callGemini, callOpenAICompatible, callAgyCli, isAgyAvailable, RateLimitError } from './providers.js';
+import { callGemini, callOpenAICompatible, callAgyCli, callJules, isAgyAvailable, RateLimitError } from './providers.js';
 import { Gatekeeper } from './gatekeeper.js';
 import { nexus } from '../../03_chat_projects_nexus/nexus-db/nexus.js';
 
@@ -152,6 +152,9 @@ export class OmniRouter {
   }
 
   async executeRoute(provider, systemPrompt, prompt, options = {}) {
+    if (provider.type === 'jules') {
+      return await callJules(prompt);
+    }
     if (provider.type === 'agy_cli') {
       return callAgyCli(prompt);
     }
@@ -191,27 +194,37 @@ export class OmniRouter {
 
     // Stage 2: Provider loop across Elite -> 120B -> Flash -> OpenRouter
     while (true) {
-      const providers = this.getAvailableProviders(options);
-
-      if (providers.length === 0) {
-        this.onStatus?.(`[OmniRoute Warning] Nenhuma API key configurada no .env. Operando em modo offline.`);
-        return {
-          text: `[OFFLINE_STUB] Super-Prompt compilado com sucesso:\n${compiledPrompt}`,
-          providerUsed: 'offline_stub',
-          tier: 0,
-          offline: true
-        };
-      }
-
-      const activeCandidates = [];
+      let activeCandidates = [];
       let minWaitMs = Infinity;
 
-      for (const p of providers) {
-        const hib = nexus.isProviderHibernating(p.id);
-        if (hib && hib.hibernating) {
-          if (hib.remainingMs < minWaitMs) minWaitMs = hib.remainingMs;
-        } else {
-          activeCandidates.push(p);
+      if (options.chatMode === 'nuvem') {
+        activeCandidates = [{
+          id: 'jules_cloud',
+          name: 'Jules (Nuvem - GitHub)',
+          tier: 1,
+          type: 'jules',
+          model: 'jules-cloud'
+        }];
+      } else {
+        const providers = this.getAvailableProviders(options);
+
+        if (providers.length === 0) {
+          this.onStatus?.(`[OmniRoute Warning] Nenhuma API key configurada no .env. Operando em modo offline.`);
+          return {
+            text: `[OFFLINE_STUB] Super-Prompt compilado com sucesso:\n${compiledPrompt}`,
+            providerUsed: 'offline_stub',
+            tier: 0,
+            offline: true
+          };
+        }
+
+        for (const p of providers) {
+          const hib = nexus.isProviderHibernating(p.id);
+          if (hib && hib.hibernating) {
+            if (hib.remainingMs < minWaitMs) minWaitMs = hib.remainingMs;
+          } else {
+            activeCandidates.push(p);
+          }
         }
       }
 

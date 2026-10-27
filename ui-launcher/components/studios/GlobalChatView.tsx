@@ -114,6 +114,9 @@ export default function GlobalChatView({
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [sessionsOpen, setSessionsOpen] = useState(false);
 
+  // Chat Mode
+  const [chatMode, setChatMode] = useState<string>('local');
+
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [inputVal, setInputVal] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -373,7 +376,8 @@ export default function GlobalChatView({
           project: activeProject,
           session_id: sessionId,
           toggles,
-          attachments: currentAttachments
+          attachments: currentAttachments,
+          chatMode
         })
       });
       const data = await res.json();
@@ -457,6 +461,20 @@ export default function GlobalChatView({
             <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded font-mono font-bold">
               {activeProject}
             </span>
+
+            <div className="flex items-center ml-2 border border-[#232338] bg-[#0c0c16] rounded-xl overflow-hidden">
+              <select
+                value={chatMode}
+                onChange={e => setChatMode(e.target.value)}
+                className="bg-transparent text-xs text-amber-400 font-bold outline-none px-3 py-1 cursor-pointer appearance-none"
+              >
+                <option value="local">Modo Local (OmniRoute - Antigravity)</option>
+                <option value="nuvem">Modo Nuvem (Jules - GitHub)</option>
+              </select>
+              <span className="px-3 py-1 text-[10px] text-gray-500 border-l border-[#232338]">
+                {chatMode === 'local' ? 'Tokens OmniRoute: 120B' : 'Tokens Jules: Ilimitado'}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
