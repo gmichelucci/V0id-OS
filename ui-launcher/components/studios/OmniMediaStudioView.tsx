@@ -51,23 +51,50 @@ export default function OmniMediaStudioView({
     setTimeout(() => setToastMsg(null), 3000);
   };
 
-  const handleGenerateImage = () => {
+  const handleGenerateImage = async () => {
     if (!imagePrompt.trim()) return;
     showToast(`Gerando ativo com ${trellis3dMode ? 'TRELLIS 3D (.glb)' : 'FLUX.1'}${uncensoredFlux ? ' [Modo Sem Censura]' : ''}...`);
-    const newAsset = {
-      title: imagePrompt,
-      type: trellis3dMode ? '3D Mesh (.glb)' : 'Imagem 4K',
-      engine: trellis3dMode ? 'TRELLIS ZeroGPU' : (uncensoredFlux ? 'FLUX.1 Abliterated' : 'FLUX.1 Schnell'),
-      time: new Date().toLocaleTimeString()
-    };
-    setGeneratedAssets(prev => [newAsset, ...prev]);
-    setImagePrompt('');
+
+    try {
+      const res = await fetch('/api/omnimedia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generate_image',
+          prompt: imagePrompt,
+          engine: trellis3dMode ? 'TRELLIS ZeroGPU' : (uncensoredFlux ? 'FLUX.1 Abliterated' : 'FLUX.1 Schnell')
+        })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setGeneratedAssets(prev => [data.asset, ...prev]);
+        setImagePrompt('');
+        showToast(data.message);
+      }
+    } catch (e: any) {
+      showToast('Erro ao se conectar na API OmniMedia.');
+    }
   };
 
-  const handleGenerateAudio = () => {
+  const handleGenerateAudio = async () => {
     if (!audioPrompt.trim()) return;
     showToast(`Sintetizando áudio com motor [${ttsEngine.toUpperCase()}]...`);
-    setAudioPrompt('');
+
+    try {
+      const res = await fetch('/api/omnimedia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate_audio', prompt: audioPrompt, engine: ttsEngine })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAudioPrompt('');
+        showToast(data.message);
+      }
+    } catch (e: any) {
+      showToast('Erro ao se conectar na API OmniMedia.');
+    }
   };
 
   const handleSendMessage = async () => {
@@ -416,7 +443,22 @@ export default function OmniMediaStudioView({
 
               <div className="flex justify-end gap-3 pt-2">
                 <button
-                  onClick={() => showToast('Compilando episódio completo com Remotion e legendas WhisperX .ass...')}
+                  onClick={async () => {
+                    showToast('Compilando episódio completo com Remotion e legendas WhisperX .ass...');
+                    try {
+                      const res = await fetch('/api/omnimedia', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'generate_video' })
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        showToast(data.message);
+                      }
+                    } catch (e: any) {
+                      showToast('Erro ao se conectar na API OmniMedia.');
+                    }
+                  }}
                   className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-6 py-2.5 rounded-xl transition shadow-lg shadow-purple-950/60"
                 >
                   🚀 Renderizar Episódio Master em 60fps
