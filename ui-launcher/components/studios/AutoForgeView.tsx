@@ -142,13 +142,27 @@ export default function AutoForgeView({ activeProject }: { activeProject: string
     }, 1500);
   };
 
-  const handleScanWeb = () => {
+  const handleScanWeb = async () => {
     setIsScanning(true);
     showToast('Executando varredura profunda sincronizada com o Research Studio...');
-    setTimeout(() => {
+
+    try {
+      const res = await fetch('/api/autoforge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'scan' })
+      });
+      const data = await res.json();
+
       setIsScanning(false);
-      showToast('Varredura concluída. 6 ferramentas analisadas e prontas para aprovação.');
-    }, 1800);
+      if (data.success && Array.isArray(data.tools)) {
+         setTools(data.tools);
+         showToast(`Varredura concluída. ${data.tools.length} ferramentas analisadas e prontas para aprovação.`);
+      }
+    } catch (e: any) {
+      setIsScanning(false);
+      showToast('Erro ao realizar a varredura (AutoForge API).');
+    }
   };
 
   const handleCloneRepo = () => {
