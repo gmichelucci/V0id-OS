@@ -89,22 +89,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const activeSession = session_id || 'default';
     const agent = new V0idAgent({ activeProject: activeProj });
 
-    // Monta o System Prompt de acordo com os Toggles ativos em tempo real
-    let systemPrompt = 'Você é o V0id OS Core, assistente técnico de engenharia de software e orquestrador supremo do sistema operacional soberano V0id. Responda em português formal, fluido, analítico e de alto nível técnico, estruturando suas explicações em Markdown com clareza impecável.';
+    // Monta o System Prompt com o Blueprint Arquitetural do Workspace (Padrão Antigravity)
+    let systemPrompt = `Você é o V0id OS Core, assistente técnico de inteligência artificial de alto nível e orquestrador supremo do sistema operacional soberano V0id.
+Você opera com raciocínio agêntico autônomo (estilo Antigravity / Cursor / Claude Code).
 
-    // Injeção de Contexto Vivo do Sistema (como o Antigravity faz com o Workspace)
-    try {
-      const fsModule = await dynamicImport('node:fs');
-      const evolutionLogPath = path.resolve(process.cwd(), '../EVOLUTION_LOG.md');
-      if (fsModule.existsSync(evolutionLogPath)) {
-        const evoContent = fsModule.readFileSync(evolutionLogPath, 'utf8').trim();
-        const cycles = evoContent.split('### [CICLO DE EVOLUÇÃO CONTÍNUA]');
-        if (cycles.length > 1) {
-          const lastCycle = cycles[cycles.length - 1].trim().slice(0, 900);
-          systemPrompt += `\n\n--- [CONTEXTO VIVO DO SISTEMA: ÚLTIMO CICLO DE AUTO-MELHORIA REGISTRADO NO DISCO] ---\n${lastCycle}\n---------------------------------------------------------------------------------`;
-        }
-      }
-    } catch {}
+ARQUITETURA DO PROJETO V0ID OS:
+- Diretório Raiz: C:\\V0id
+- Estrutura de Pastas e Módulos:
+  • 01_core_security: Roteador de IA (OmniRoute), Sandbox SAST, ferramentas de CLI e ferramentas agênticas (tools.js).
+  • 02_auto_forge: Radar MCP na web, engenharia reversa REA e autômatos.
+  • 03_chat_projects_nexus: Banco SQLite persistente (nexus.db) e gerenciador de projetos/conversas.
+  • docs: Documentação viva, fotos dos estúdios (docs/scenes/), relatórios de auditoria interativa (INTERACTIVE_TEST_REPORT.md) e mapa de cenas (SCENES_INDEX.md).
+  • ui-launcher: Interface gráfica Next.js + Three.js com o Launcher 3D orbital e os 14 estúdios.
+  • Scripts de Automação: v0id_token_budget_loop.mjs (motor de auto-evolução contínua), v0id_interactive_tester.mjs (auditoria E2E via CDP), v0id_capture_scenes.mjs (captura de fotos), v0id_auto_healer.mjs (auto-cura de código).
+  • Arquivos Chave: EVOLUTION_LOG.md (histórico de todos os ciclos de auto-melhoria), V0ID_SPEC.md (especificação do sistema).
+
+DIRETRIZ AGÊNTICA FUNDAMENTAL:
+Você possui ferramentas reais conectadas ao disco rígido e ao PowerShell do Windows:
+- read_file(filePath): lê o conteúdo de qualquer arquivo no disco.
+- write_file(filePath, content): cria ou edita arquivos.
+- list_dir(dirPath): lista diretórios e descobre arquivos.
+- run_command(command): executa comandos no PowerShell (ex: git status, git log, npm test, dir).
+
+REGRAS DE CONDUTA TÉCNICA:
+1. NUNCA adivinhe ou invente dados sobre o código, arquivos, logs, testes ou histórico do sistema. Use read_file ou run_command para inspecionar os arquivos reais antes de formular sua resposta.
+2. Formate suas respostas de forma elegante, completa e profissional em português com Markdown rico (tópicos, tabelas, código demarcado).`;
 
     if (toggles?.cavemanMode) {
       systemPrompt += '\nDiretriz de concisão extrema: forneça respostas diretas e cirúrgicas sem preâmbulos.';
@@ -115,8 +124,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (toggles?.ponytail) {
       systemPrompt += ' Adote a postura Ponytail (engenharia sênior pragmática: soluções limpas, menor código necessário, sem abstrações inúteis).';
     }
-
-    systemPrompt += '\nVocê tem ferramentas para ler arquivos (read_file), listar pastas (list_dir) e rodar comandos (run_command). Se a dúvida do usuário depender de dados específicos do código ou arquivos, utilize essas ferramentas.';
 
     // Processa arquivos anexados e anexa ao prompt do usuário
     let fullUserPrompt = message;
@@ -184,75 +191,78 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       activeProject: activeProj
     });
 
-    const response = await router.route(fullUserPrompt, {
-      forceComplex: true,
-      tools: TOOL_DEFINITIONS,
-      systemPrompt,
-      history: previousHistory,
-      uncensored: toggles?.uncensoredMode,
-      forceAgy: toggles?.forceAgy,
-      promptImprover: toggles?.promptImprover !== false,
-      cavemanMode: toggles?.cavemanMode === true,
-      ponytail: toggles?.ponytail !== false
-    });
+    let currentPrompt = fullUserPrompt;
+    const allToolResults: any[] = [...toolResultsFromAttachments];
+    let finalAnswer = '';
+    let chosenProvider = 'OmniRoute Core';
+    let chosenTier: any = 1;
+    let chosenModel = 'default';
 
-    let text = response.text || '';
-    // Usa o parseTools do V0idAgent para capturar chamadas nativas + blocos JSON + Markdown ghost-writes
-    const toolCalls = agent.parseTools(text, response.toolCalls);
-    const toolResults: any[] = [];
+    // Loop ReAct Agêntico (até 3 iterações autônomas de pesquisa / execução de ferramentas)
+    for (let turn = 0; turn < 3; turn++) {
+      const response = await router.route(currentPrompt, {
+        forceComplex: true,
+        tools: TOOL_DEFINITIONS,
+        systemPrompt,
+        history: previousHistory,
+        uncensored: toggles?.uncensoredMode,
+        forceAgy: toggles?.forceAgy,
+        promptImprover: toggles?.promptImprover !== false,
+        cavemanMode: toggles?.cavemanMode === true,
+        ponytail: toggles?.ponytail !== false
+      });
 
-    // Executa ferramentas reais no disco se o modelo tiver invocado
-    for (const tc of toolCalls) {
-      if (tools[tc.tool]) {
-        try {
-          const r = tools[tc.tool](tc.args);
-          toolResults.push({ tool: tc.tool, args: tc.args, result: r });
-        } catch (err: any) {
-          toolResults.push({ tool: tc.tool, args: tc.args, error: err.message });
+      chosenProvider = response.providerUsed || chosenProvider;
+      chosenTier = response.tier || chosenTier;
+      chosenModel = response.model || chosenModel;
+      const responseText = response.text || '';
+
+      // Extrai chamadas de ferramentas nativas ou blocos de código
+      const toolCalls = agent.parseTools(responseText, response.toolCalls);
+
+      // Se o modelo não invocou ferramentas, temos a resposta textual final
+      if (toolCalls.length === 0) {
+        finalAnswer = responseText;
+        break;
+      }
+
+      // Executa as ferramentas reais chamadas pelo modelo
+      const turnResults: any[] = [];
+      for (const tc of toolCalls) {
+        if (tools[tc.tool]) {
+          try {
+            const r = tools[tc.tool](tc.args);
+            turnResults.push({ tool: tc.tool, args: tc.args, result: r });
+            allToolResults.push({ tool: tc.tool, args: tc.args, result: r });
+          } catch (err: any) {
+            turnResults.push({ tool: tc.tool, args: tc.args, error: err.message });
+            allToolResults.push({ tool: tc.tool, args: tc.args, error: err.message });
+          }
         }
       }
-    }
 
-    // Se o modelo invocou ferramentas no disco mas não gerou o texto explicativo final (ou mandou apenas JSON),
-    // alimenta o resultado da ferramenta de volta para o modelo gerar a resposta completa da pergunta do usuário!
-    const isOnlyToolJson = /^\s*```(?:json)?\s*\{[\s\S]*\}\s*```\s*$/i.test(text.trim());
-    if (toolResults.length > 0 && (!text.trim() || isOnlyToolJson)) {
-      try {
-        const toolSummary = toolResults.map(t => {
-          if (t.tool === 'read_file') {
-            const preview = typeof t.result === 'string' ? t.result.slice(0, 1800) : '';
-            return `[ARQUIVO LIDO: ${t.args?.filePath || t.args?.path || 'arquivo'}]\n${preview}`;
-          }
-          if (t.tool === 'list_dir') {
-            return `[CONTEÚDO DA PASTA: ${t.args?.dirPath || '.'}]\n${t.result}`;
-          }
-          return `[FERRAMENTA ${t.tool}]: ${typeof t.result === 'string' ? t.result.slice(0, 500) : 'OK'}`;
-        }).join('\n\n');
+      // Formata os resultados reais do disco para a próxima iteração cognitiva
+      const toolSummary = turnResults.map(t => {
+        const argStr = JSON.stringify(t.args);
+        const resStr = typeof t.result === 'string' ? t.result.slice(0, 3500) : (t.error ? `ERRO: ${t.error}` : JSON.stringify(t.result));
+        return `[FERRAMENTA: ${t.tool}(${argStr})]\nRESULTADO:\n${resStr}`;
+      }).join('\n\n');
 
-        const followUpPrompt = `Você é o V0id OS Core. O usuário fez a seguinte pergunta:
-"${message}"
-
-Aqui estão os dados reais que você acabou de ler do disco rígido:
+      currentPrompt = `Você invocou as seguintes ferramentas no sistema operacional:
 ${toolSummary}
 
-DIRETRIZ DE RESPOSTA OBRIGATÓRIA:
-Com base estritamente nos dados que você leu acima, formule agora uma resposta completa, analítica e estruturada explicando o que você leu e respondendo à pergunta original do usuário.
-Não invoque novas ferramentas. Responda em texto claro, técnico e executivo com a identidade oficial do V0id OS.`;
+PERGUNTA ORIGINAL DO USUÁRIO:
+"${message}"
 
-        const followUp = await router.route(followUpPrompt, {
-          forceComplex: true,
-          systemPrompt: systemPrompt + ' Formule uma resposta analítica, fluida, estruturada e detalhada em linguagem natural e profissional.',
-          uncensored: toggles?.uncensoredMode,
-          forceAgy: toggles?.forceAgy
-        });
-        if (followUp && followUp.text) {
-          text = followUp.text;
-        }
-      } catch (err: any) {
-        console.error('Erro na síntese da resposta com ferramentas:', err.message);
-      }
-    } else if (isOnlyToolJson && !/json/i.test(message)) {
-      // Se o modelo respondeu exclusivamente em bloco JSON sem ter sido pedido JSON, converte em Markdown analítico elegante
+INSTRUÇÃO:
+Analise os dados reais acima. Se você já tiver informações suficientes para responder à pergunta com precisão cirúrgica e profundidade técnica, elabore a resposta final estruturada em Markdown. Se ainda faltar algum detalhe específico do disco ou do sistema, faça outra chamada de ferramenta.`;
+    }
+
+    let text = finalAnswer;
+
+    // Se o modelo respondeu exclusivamente em bloco JSON sem ter sido pedido JSON, converte em Markdown analítico elegante
+    const isOnlyToolJson = /^\s*```(?:json)?\s*\{[\s\S]*\}\s*```\s*$/i.test(text.trim());
+    if (isOnlyToolJson && !/json/i.test(message)) {
       try {
         const rawJson = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
         const parsed = JSON.parse(rawJson);
@@ -270,12 +280,12 @@ Não invoque novas ferramentas. Responda em texto claro, técnico e executivo co
       nexus.saveChatMessage({
         projectId: activeProj,
         sessionId: activeSession,
-        sender: response.providerUsed || 'OmniRoute Core',
+        sender: chosenProvider || 'OmniRoute Core',
         text,
-        provider: response.providerUsed || 'OmniRoute Core',
-        tier: response.tier,
-        model: response.model,
-        toolResults
+        provider: chosenProvider || 'OmniRoute Core',
+        tier: chosenTier,
+        model: chosenModel,
+        toolResults: allToolResults
       });
     } catch (e: any) {
       console.warn('Erro ao persistir resposta do assistente:', e.message);
@@ -284,10 +294,10 @@ Não invoque novas ferramentas. Responda em texto claro, técnico e executivo co
     return res.status(200).json({
       success: true,
       text,
-      provider: response.providerUsed || 'OmniRoute Core',
-      tier: response.tier,
-      model: response.model,
-      toolResults
+      provider: chosenProvider || 'OmniRoute Core',
+      tier: chosenTier,
+      model: chosenModel,
+      toolResults: allToolResults
     });
   } catch (err: any) {
     console.error('CHAT API ERROR:', err.stack || err);

@@ -156,9 +156,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/chat.ts": {
-    "mtime": 1793062496.5015614,
-    "seen": 1793062528.5042725,
-    "ast_hash": "571110183d92e4afdf4d80a2745eb9dc",
+    "mtime": 1793063435.944202,
+    "seen": 1793063482.6652741,
+    "ast_hash": "7f87db6bdb646d3bd32891332f00457e",
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/files.ts": {
@@ -360,9 +360,9 @@
     "semantic_hash": ""
   },
   "v0id_capture_scenes.mjs": {
-    "mtime": 1793044832.9215226,
-    "seen": 1793044927.982941,
-    "ast_hash": "5005ce63e4a792df9c877e5a5d496657",
+    "mtime": 1793063272.6772606,
+    "seen": 1793063482.6652741,
+    "ast_hash": "801abfddd1d6abbb86a3255894240f85",
     "semantic_hash": ""
   },
   "EVOLUTION_LOG.md": {
@@ -372,99 +372,99 @@
     "semantic_hash": ""
   },
   "docs/SCENES_INDEX.md": {
-    "mtime": 1793045463.4464736,
-    "seen": 1793062528.5042725,
-    "ast_hash": "9c9912ee8bf6446ca24ef9b1013a301e",
+    "mtime": 1793063321.6729734,
+    "seen": 1793063482.6652741,
+    "ast_hash": "8cbfad530367dd7a6844856b71fc2049",
     "semantic_hash": ""
   },
   "docs/scenes/00_v0id_launcher_3d.png": {
-    "mtime": 1793045428.6530128,
-    "seen": 1793062528.5042725,
-    "ast_hash": "591e96abb37ec544de04d75fd5aea7f5",
+    "mtime": 1793063283.0973556,
+    "seen": 1793063482.6652741,
+    "ast_hash": "c75b3f0beb6e5887c36cdd1adb2bc91b",
     "semantic_hash": ""
   },
   "docs/scenes/01_chat_global.png": {
-    "mtime": 1793045430.5138462,
-    "seen": 1793062528.5042725,
-    "ast_hash": "3435e0d4438cecc68b30d398b867f4ea",
+    "mtime": 1793063285.8362582,
+    "seen": 1793063482.6652741,
+    "ast_hash": "9158856756dff1e2ee9af41a8f9ab29f",
     "semantic_hash": ""
   },
   "docs/scenes/02_core_soul.png": {
-    "mtime": 1793045433.083395,
-    "seen": 1793062528.5042725,
-    "ast_hash": "9abc83dfe5bd9fcbe47593e4e7af5637",
+    "mtime": 1793063288.575184,
+    "seen": 1793063482.6652741,
+    "ast_hash": "3b31f4fdff630cbc64991c3c2b719fb1",
     "semantic_hash": ""
   },
   "docs/scenes/03_auto_forge.png": {
-    "mtime": 1793045435.6938894,
-    "seen": 1793062528.5042725,
-    "ast_hash": "88e026689a88ac23586f74122d734bd8",
+    "mtime": 1793063291.2954857,
+    "seen": 1793063482.6652741,
+    "ast_hash": "0e3ea55544bba4396c052a230d2d8db8",
     "semantic_hash": ""
   },
   "docs/scenes/04_security_sandbox.png": {
-    "mtime": 1793045438.2989385,
-    "seen": 1793062528.5042725,
-    "ast_hash": "3237acbf36e9821ae5450bc25ef3be9e",
+    "mtime": 1793063294.0170057,
+    "seen": 1793063482.6652741,
+    "ast_hash": "eda250f3ec735accdaf15e29cb45ec24",
     "semantic_hash": ""
   },
   "docs/scenes/05_plugins_mcp.png": {
-    "mtime": 1793045440.925678,
-    "seen": 1793062528.5042725,
-    "ast_hash": "88e026689a88ac23586f74122d734bd8",
+    "mtime": 1793063296.7252934,
+    "seen": 1793063482.6652741,
+    "ast_hash": "b398750fea594646c610999dde7b1bb6",
     "semantic_hash": ""
   },
   "docs/scenes/06_rules_system.png": {
-    "mtime": 1793045443.9394732,
-    "seen": 1793062528.5042725,
-    "ast_hash": "dc397213684a72942bfc0723d8328339",
+    "mtime": 1793063299.451136,
+    "seen": 1793063482.6652741,
+    "ast_hash": "5dc2baae7cf53e8d8fef3852b522dac3",
     "semantic_hash": ""
   },
   "docs/scenes/07_automations_n8n.png": {
-    "mtime": 1793045445.847201,
-    "seen": 1793062528.5042725,
-    "ast_hash": "9dbb5f35c8d150e3c91692c2b24f83bd",
+    "mtime": 1793063302.1910825,
+    "seen": 1793063482.6652741,
+    "ast_hash": "ea7a4b497ddf63505c82a30baba3bfcc",
     "semantic_hash": ""
   },
   "docs/scenes/08_repository_hub.png": {
-    "mtime": 1793045448.537328,
-    "seen": 1793062528.5042725,
-    "ast_hash": "9513e249564a0e5d925d0cbe0bc5190c",
+    "mtime": 1793063304.9051788,
+    "seen": 1793063482.6652741,
+    "ast_hash": "a6b97cbc25a8673f5570e33bf2f33880",
     "semantic_hash": ""
   },
   "docs/scenes/09_code_studio.png": {
-    "mtime": 1793045451.3975334,
-    "seen": 1793062528.5042725,
-    "ast_hash": "d59a56c9a31c80116446e55275fe0c55",
+    "mtime": 1793063307.666247,
+    "seen": 1793063482.6652741,
+    "ast_hash": "f7b6c5f234e027199c11c2e0ee40036f",
     "semantic_hash": ""
   },
   "docs/scenes/10_game_engine.png": {
-    "mtime": 1793045454.234399,
-    "seen": 1793062528.5042725,
-    "ast_hash": "dd7d65f29a84973965e7a794fbd55fb6",
+    "mtime": 1793063310.4391174,
+    "seen": 1793063482.6652741,
+    "ast_hash": "2284e1f8a766091f2c319909d0f64d0c",
     "semantic_hash": ""
   },
   "docs/scenes/11_omnimedia_studio.png": {
-    "mtime": 1793045456.0430558,
-    "seen": 1793062528.5042725,
-    "ast_hash": "1574b87b776c72730006679bc3e63278",
+    "mtime": 1793063313.1850996,
+    "seen": 1793063482.6652741,
+    "ast_hash": "6da0a1821c9027b2f0f2f6a31b3621a9",
     "semantic_hash": ""
   },
   "docs/scenes/12_research_studio.png": {
-    "mtime": 1793045458.177219,
-    "seen": 1793062528.5042725,
-    "ast_hash": "7fc7e9ce059bdf9803a1576bf4c948c0",
+    "mtime": 1793063315.8921123,
+    "seen": 1793063482.6652741,
+    "ast_hash": "00013b94e4f477b3d2fb3650efc7c9c0",
     "semantic_hash": ""
   },
   "docs/scenes/13_marketing_agency.png": {
-    "mtime": 1793045460.5752237,
-    "seen": 1793062528.5042725,
-    "ast_hash": "88e026689a88ac23586f74122d734bd8",
+    "mtime": 1793063318.6164794,
+    "seen": 1793063482.6652741,
+    "ast_hash": "07352d913dcfa7b5e8d62cc765b9f0d5",
     "semantic_hash": ""
   },
   "docs/scenes/14_finances_caixa.png": {
-    "mtime": 1793045463.215438,
-    "seen": 1793062528.5042725,
-    "ast_hash": "9abc83dfe5bd9fcbe47593e4e7af5637",
+    "mtime": 1793063321.3243465,
+    "seen": 1793063482.6652741,
+    "ast_hash": "ee8dd0ec3b9d4d573a4866e1b7543bae",
     "semantic_hash": ""
   },
   "screenshot_game.png": {

@@ -5,13 +5,10 @@
 
 import path from 'node:path';
 import fs from 'node:fs';
-import os from 'node:os';
-import { spawnSync } from 'node:child_process';
+import { EdgeCDPClient } from './v0id_interactive_tester.mjs';
 
 const V0ID_ROOT = process.cwd().toLowerCase().endsWith('ui-launcher') ? path.resolve(process.cwd(), '..') : process.cwd();
 const OUTPUT_DIR = path.join(V0ID_ROOT, 'docs', 'scenes');
-const TEMP_PROFILE_DIR = path.join(os.tmpdir(), 'v0id_edge_profile');
-const EDGE_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -38,59 +35,53 @@ export const SCENES = [
 export async function captureAllScenes(onProgress) {
   console.log(`\n==================================================`);
   console.log(`📸 V0ID OS — CAPTURANDO CENAS VISUAIS DE TODOS OS ESTÚDIOS`);
+  console.log(`Navegador: Edge Headless (DevTools Protocol Nativo CDP)`);
   console.log(`Destino: ${OUTPUT_DIR}`);
   console.log(`==================================================\n`);
 
   const manifest = [];
-  let index = 0;
+  const client = new EdgeCDPClient(9228);
 
-  for (const scene of SCENES) {
-    index++;
-    const outFile = path.join(OUTPUT_DIR, `${scene.name}.png`);
-    const statusMsg = `[${index}/${SCENES.length}] Capturando cena [${scene.id}] -> ${scene.name}.png...`;
-    if (typeof onProgress === 'function') {
-      onProgress(statusMsg);
-    } else {
-      console.log(statusMsg);
-    }
-    
-    try {
-      const args = [
-        '--headless=new',
-        '--disable-gpu',
-        '--no-sandbox',
-        '--hide-scrollbars',
-        '--window-size=1366,768',
-        '--run-all-compositor-stages-before-draw',
-        '--virtual-time-budget=2000',
-        `--user-data-dir=${TEMP_PROFILE_DIR}`,
-        `--screenshot=${outFile}`,
-        scene.url
-      ];
+  try {
+    await client.start();
+    let index = 0;
 
-      spawnSync(EDGE_PATH, args, {
-        timeout: 25000,
-        windowsHide: true,
-        stdio: 'pipe'
-      });
-
-      if (fs.existsSync(outFile)) {
-        const stats = fs.statSync(outFile);
-        const okMsg = `  ✅ Capturado com sucesso! (${(stats.size / 1024).toFixed(1)} KB)`;
-        if (typeof onProgress === 'function') {
-          onProgress(okMsg);
-        } else {
-          console.log(okMsg);
-        }
-        manifest.push({ ...scene, file: outFile, sizeKB: (stats.size / 1024).toFixed(1), ok: true });
+    for (const scene of SCENES) {
+      index++;
+      const outFile = path.join(OUTPUT_DIR, `${scene.name}.png`);
+      const statusMsg = `[${index}/${SCENES.length}] Capturando cena [${scene.id}] -> ${scene.name}.png...`;
+      if (typeof onProgress === 'function') {
+        onProgress(statusMsg);
       } else {
-        console.warn(`  ⚠️ Arquivo não gerado para ${scene.id}`);
-        manifest.push({ ...scene, ok: false });
+        console.log(statusMsg);
       }
-    } catch (err) {
-      console.error(`  ❌ Erro ao capturar cena ${scene.id}: ${err.message}`);
-      manifest.push({ ...scene, ok: false, error: err.message });
+
+      try {
+        await client.navigate(scene.url);
+        // Aguarda hidratação do React para montar a tela do estúdio correspondente
+        await new Promise(r => setTimeout(r, 1400));
+
+        const shot = await client.send('Page.captureScreenshot', { format: 'png' }, 10000);
+        if (shot && shot.data) {
+          fs.writeFileSync(outFile, Buffer.from(shot.data, 'base64'));
+          const stats = fs.statSync(outFile);
+          const okMsg = `  ✅ Capturado com sucesso! (${(stats.size / 1024).toFixed(1)} KB)`;
+          if (typeof onProgress === 'function') {
+            onProgress(okMsg);
+          } else {
+            console.log(okMsg);
+          }
+          manifest.push({ ...scene, file: outFile, sizeKB: (stats.size / 1024).toFixed(1), ok: true });
+        } else {
+          throw new Error('CDP não retornou dados de imagem');
+        }
+      } catch (err) {
+        console.error(`  ❌ Erro ao capturar cena ${scene.id}: ${err.message}`);
+        manifest.push({ ...scene, ok: false, error: err.message });
+      }
     }
+  } finally {
+    await client.close();
   }
 
   // Gera um índice visual em Markdown
