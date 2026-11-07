@@ -22,8 +22,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 1. ACTION: ABRIR PASTA NO WINDOWS EXPLORER
     if (req.method === 'POST' && req.query.action === 'open_folder') {
       const { id } = req.body;
-      let folderPath = VAULT_ROOT;
-      if (id && id !== 'global') {
+      if (!id || id === 'global') {
+        return res.status(200).json({ success: false, message: 'Modo Geral não possui repositório vinculado.' });
+      }
+      let folderPath = '';
+      if (id === 'v0id') {
+        folderPath = process.cwd().toLowerCase().endsWith('ui-launcher') ? path.resolve(process.cwd(), '..') : process.cwd();
+      } else {
         const row = db.prepare('SELECT type, sync_target FROM projects WHERE id = ?').get(id) as any;
         if (row && row.type === 'local' && row.sync_target?.startsWith('local:')) {
           folderPath = row.sync_target.substring(6);
@@ -31,9 +36,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           folderPath = path.join(VAULT_ROOT, id);
         }
       }
-      if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath, { recursive: true });
-      exec(`explorer.exe "${folderPath}"`, () => {});
-      return res.status(200).json({ success: true, message: `Pasta aberta no Windows: ${folderPath}` });
+      if (folderPath && fs.existsSync(folderPath)) {
+        exec(`explorer.exe "${folderPath}"`, () => {});
+        return res.status(200).json({ success: true, message: `Pasta aberta no Windows: ${folderPath}` });
+      }
+      return res.status(404).json({ error: `Pasta não encontrada: ${folderPath}` });
     }
 
     // 1.1 ACTION: VINCULAR REPOSITÓRIO LOCAL EXISTENTE
@@ -72,19 +79,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 1.2 ACTION: ABRIR DIÁLOGO NATIVO DO WINDOWS PARA ESCOLHER PASTA
     if (req.method === 'POST' && req.query.action === 'browse_folder') {
       try {
-        const psScript = `
-Add-Type -AssemblyName System.Windows.Forms;
-$f = New-Object System.Windows.Forms.FolderBrowserDialog;
-$f.Description = 'Selecione qualquer pasta de projeto ou repositório no seu computador';
-$f.ShowNewFolderButton = $true;
-if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-  Write-Output $f.SelectedPath
-}
-`;
-        const selected = execSync(`powershell -Sta -Command "${psScript.replace(/\r?\n/g, ' ')}"`, {
-          encoding: 'utf8',
-          timeout: 45000
-        }).trim();
+        const psScript = `Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = 'Selecione a pasta do repositório no seu computador'; $f.ShowNewFolderButton = $true; $top = New-Object System.Windows.Forms.Form; $top.TopMost = $true; $top.Opacity = 0; $top.ShowInTaskbar = $false; $top.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen; $top.Show(); $top.BringToFront(); $res = $f.ShowDialog($top); $top.Dispose(); if ($res -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $f.SelectedPath; }`;
+        const selected = await new Promise<string>((resolve) => {
+          exec(`powershell -Sta -NoProfile -Command "${psScript}"`, {
+            encoding: 'utf8',
+            timeout: 60000
+          }, (err, stdout) => {
+            if (err && !stdout) return resolve('');
+            resolve((stdout || '').trim());
+          });
+        });
 
         if (selected && fs.existsSync(selected)) {
           return res.status(200).json({ success: true, folderPath: selected, name: path.basename(selected) });
@@ -92,6 +96,52 @@ if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
         return res.status(200).json({ success: false, message: 'Nenhuma pasta selecionada' });
       } catch (err: any) {
         return res.status(500).json({ error: 'Erro ao abrir seletor: ' + err.message });
+      }
+    }
+
+    // 1.2.1 ACTION: EXPLORAR PASTAS E ARQUIVOS DE UM CAMINHO ESPECÍFICO DO PC
+    if (req.method === 'GET' && req.query.action === 'explore_dir') {
+      const targetPath = (req.query.path as string) || 'C:\\Projetos';
+      if (!fs.existsSync(targetPath)) {
+        return res.status(404).json({ error: 'Diretório não encontrado: ' + targetPath });
+      }
+      try {
+        const entries = fs.readdirSync(targetPath, { withFileTypes: true });
+        const folders: Array<{ name: string; path: string }> = [];
+        const files: Array<{ name: string; path: string; size: number; ext: string }> = [];
+        let hasGit = false;
+        let hasPkg = false;
+
+        for (const e of entries) {
+          if (e.name === '.git') hasGit = true;
+          if (['package.json', 'Cargo.toml', 'pyproject.toml', 'requirements.txt', 'go.mod', 'project.godot', 'tsconfig.json'].includes(e.name)) {
+            hasPkg = true;
+          }
+          if (e.name.startsWith('.') && e.name !== '.env.example') continue;
+          if (e.name === 'node_modules' || e.name === '.next' || e.name === '.godot') continue;
+
+          const full = path.join(targetPath, e.name);
+          if (e.isDirectory()) {
+            folders.push({ name: e.name, path: full });
+          } else {
+            let size = 0;
+            try { size = fs.statSync(full).size; } catch {}
+            files.push({ name: e.name, path: full, size, ext: path.extname(e.name).toLowerCase() });
+          }
+        }
+
+        const parent = path.dirname(targetPath);
+        return res.status(200).json({
+          success: true,
+          currentPath: targetPath,
+          parentPath: parent !== targetPath ? parent : null,
+          name: path.basename(targetPath) || targetPath,
+          isRepo: hasGit || hasPkg,
+          folders: folders.sort((a, b) => a.name.localeCompare(b.name)),
+          files: files.slice(0, 80).sort((a, b) => a.name.localeCompare(b.name))
+        });
+      } catch (err: any) {
+        return res.status(500).json({ error: 'Erro ao explorar diretório: ' + err.message });
       }
     }
 
@@ -130,16 +180,24 @@ if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
     // 1.4 ACTION: AUTOCOMPLETAR ARQUIVOS DO PROJETO PARA MENÇÃO COM @ (PADRÃO ANTIGRAVITY)
     if (req.method === 'GET' && req.query.action === 'suggest_files') {
       const { id, query } = req.query;
-      let projectFolder = VAULT_ROOT;
-      if (id && id !== 'global') {
+      if (!id || id === 'global') {
+        return res.status(200).json({ success: true, suggestions: [] });
+      }
+
+      let projectFolder = '';
+      if (id === 'v0id') {
+        projectFolder = process.cwd().toLowerCase().endsWith('ui-launcher') ? path.resolve(process.cwd(), '..') : process.cwd();
+      } else {
         const row = db.prepare('SELECT type, sync_target FROM projects WHERE id = ?').get(id as string) as any;
         if (row && row.type === 'local' && row.sync_target?.startsWith('local:')) {
           projectFolder = row.sync_target.substring(6);
         } else {
           projectFolder = path.join(VAULT_ROOT, id as string);
         }
-      } else if (id === 'global') {
-        projectFolder = 'C:\\';
+      }
+
+      if (!projectFolder || !fs.existsSync(projectFolder) || projectFolder === 'C:\\') {
+        return res.status(200).json({ success: true, suggestions: [] });
       }
 
       const q = typeof query === 'string' ? query.toLowerCase().trim() : '';
@@ -161,9 +219,7 @@ if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             }
           }
         };
-        if (fs.existsSync(projectFolder)) {
-          crawl(projectFolder);
-        }
+        crawl(projectFolder);
       } catch {}
 
       return res.status(200).json({ success: true, suggestions: results.slice(0, 20) });
@@ -317,18 +373,38 @@ if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
       const hasV0id = rows.some(r => r.id === 'v0id');
 
       if (!hasGlobal) {
-        db.prepare("INSERT OR IGNORE INTO projects (id, name, description, type, sync_target, active) VALUES ('global', 'Global', 'Ambiente Desktop Global', 'local', 'local:C:\\', 1)").run();
-        rows.push({ id: 'global', name: 'Global', description: 'Ambiente Desktop Global', type: 'local', sync_target: 'local:C:\\', active: 1 });
+        db.prepare("INSERT OR IGNORE INTO projects (id, name, description, type, sync_target, active) VALUES ('global', 'Geral', 'Nenhum repositório vinculado — Modo Livre e Conversação Geral', 'unbound', '', 1)").run();
+        rows.unshift({ id: 'global', name: 'Geral', description: 'Nenhum repositório vinculado — Modo Livre e Conversação Geral', type: 'unbound', sync_target: '', active: 1 });
       }
 
+      const cwd = process.cwd();
+      const rootPath = cwd.toLowerCase().endsWith('ui-launcher') ? path.resolve(cwd, '..') : cwd;
+
       if (!hasV0id) {
-        const cwd = process.cwd();
-        const rootPath = cwd.toLowerCase().endsWith('ui-launcher') ? path.resolve(cwd, '..') : cwd;
-        db.prepare("INSERT OR IGNORE INTO projects (id, name, description, type, sync_target, active) VALUES ('v0id', 'V0id OS', 'Repositório Local V0id', 'local', ?, 1)").run(`local:${rootPath}`);
-        rows.push({ id: 'v0id', name: 'V0id OS', description: 'Repositório Local V0id', type: 'local', sync_target: `local:${rootPath}`, active: 1 });
+        db.prepare("INSERT OR IGNORE INTO projects (id, name, description, type, sync_target, active) VALUES ('v0id', 'V0id OS', 'Repositório Central do V0id OS', 'local', ?, 1)").run(`local:${rootPath}`);
+        rows.push({ id: 'v0id', name: 'V0id OS', description: 'Repositório Central do V0id OS', type: 'local', sync_target: `local:${rootPath}`, active: 1 });
       }
 
       const enriched = rows.map(r => {
+        if (r.id === 'global') {
+          return {
+            ...r,
+            name: 'Geral',
+            description: 'Nenhum repositório vinculado — Modo Livre e Conversação Geral',
+            type: 'unbound',
+            folderExists: false,
+            folderPath: '',
+            isUnbound: true
+          };
+        }
+        if (r.id === 'v0id') {
+          return {
+            ...r,
+            name: 'V0id OS',
+            folderExists: true,
+            folderPath: rootPath
+          };
+        }
         const folder = (r.type === 'local' && r.sync_target?.startsWith('local:'))
           ? r.sync_target.substring(6)
           : path.join(VAULT_ROOT, r.id);

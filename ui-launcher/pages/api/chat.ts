@@ -118,21 +118,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const activeProj = (project || 'global').toLowerCase();
     const activeSession = session_id || 'default';
     const projectRoot = nexus.getProjectRoot(activeProj);
-    process.env.V0ID_PROJECT_ROOT = projectRoot;
+    process.env.V0ID_PROJECT_ROOT = projectRoot || '';
     const projectRow = nexus.getProject(activeProj);
-    const projectName = projectRow?.name || (activeProj === 'v0id' ? 'V0id OS' : 'Global');
+    const projectName = projectRow?.name || (activeProj === 'v0id' ? 'V0id OS' : 'Geral');
 
     const agent = new V0idAgent({ activeProject: activeProj });
 
     // Monta o System Prompt de Alto Nível (Padrão Antigravity Soberano)
-    let systemPrompt = `Você é o V0id OS Core, assistente de inteligência artificial soberano, culto, prestativo e altamente competente (padrão Google Antigravity / Gemini Elite). Você é a essência do V0id OS, um sistema autônomo, auto-curável e auto-melhorável.
-
-WORKSPACE / REPOSITÓRIO ATIVO:
+    const repoSection = (activeProj === 'global' || !projectRoot)
+      ? `WORKSPACE / REPOSITÓRIO ATIVO:
+- Modo: "Geral" (Nenhum repositório vinculado — Modo Livre e Conversação Geral)
+- ESCOPO: Nenhum repositório de código está vinculado a este chat. Você opera em modo livre para reflexão, estratégia, perguntas gerais ou auxílio conceitual. Se o usuário quiser criar, inspecionar, debugar ou executar código em um projeto específico, oriente-o a selecionar o projeto "V0id OS" ou clicar em "+ Vincular Pasta" na barra superior para vincular a pasta do repositório dele.
+- ACESSO AO SISTEMA: Caso o usuário solicite comandos ou investigações em caminhos explícitos no Windows (ex: C:\\Projetos), você possui ferramentas ativas de terminal e disco para inspecionar conforme solicitado.`
+      : `WORKSPACE / REPOSITÓRIO ATIVO:
 - Projeto Selecionado: "${projectName}" (ID: ${activeProj})
 - Raiz do Repositório: "${projectRoot}"
 - ESCOPO DE OPERAÇÃO: Suas ferramentas de arquivo e terminal (read_file, write_file, apply_diff, search_code, find_files, list_dir, run_command) operam DIRETAMENTE dentro da raiz deste repositório ("${projectRoot}").
 - Se o usuário pedir para criar, modificar, compilar, rodar ou inspecionar arquivos deste projeto, faça isso diretamente nesta pasta como em um IDE profissional estilo Antigravity.
-- ACESSO TOTAL AO COMPUTADOR DO USUÁRIO: Além do repositório ativo, você tem autorização e capacidade total para ler, inspecionar, buscar, listar ou criar arquivos em QUALQUER pasta do computador do usuário (C:\, D:\, etc.) quando ele fornecer caminhos ou pedir investigações no sistema. Nunca afirme que não tem acesso aos arquivos locais.
+- ACESSO TOTAL AO COMPUTADOR DO USUÁRIO: Além do repositório ativo, você tem autorização e capacidade total para ler, inspecionar, buscar, listar ou criar arquivos em QUALQUER pasta do computador do usuário (C:\\, D:\\, etc.) quando ele fornecer caminhos ou pedir investigações no sistema. Nunca afirme que não tem acesso aos arquivos locais.`;
+
+    let systemPrompt = `Você é o V0id OS Core, assistente de inteligência artificial soberano, culto, prestativo e altamente competente (padrão Google Antigravity / Gemini Elite). Você é a essência do V0id OS, um sistema autônomo, auto-curável e auto-melhorável.
+
+${repoSection}
 
 CONSCIÊNCIA DE SISTEMA & CAPACIDADES REAIS:
 - Você NÃO é um chatbot limitado a texto. Você tem ACESSO DIRETO AO SISTEMA OPERACIONAL WINDOWS, ao disco rígido e ao terminal.

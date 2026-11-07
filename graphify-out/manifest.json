@@ -66,9 +66,9 @@
     "semantic_hash": ""
   },
   "03_chat_projects_nexus/nexus-db/nexus.js": {
-    "mtime": 1794041074.459189,
-    "seen": 1794041340.7788596,
-    "ast_hash": "9d9563dd48f10ace0b15cb91d918c585",
+    "mtime": 1794082057.4977555,
+    "seen": 1794082519.658184,
+    "ast_hash": "d22bd9cc94ad1cebb0c1d6e9c344a174",
     "semantic_hash": ""
   },
   "03_chat_projects_nexus/nexus-db/nexus.test.js": {
@@ -156,21 +156,21 @@
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/chat.ts": {
-    "mtime": 1794075663.0364404,
-    "seen": 1794075923.9052184,
-    "ast_hash": "e235ed3d5de0b230c40e9b8b9d9f1739",
+    "mtime": 1794082075.0846672,
+    "seen": 1794082519.658184,
+    "ast_hash": "552e808bb4564381c074883d3cd31bfe",
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/files.ts": {
-    "mtime": 1794040058.4743814,
-    "seen": 1794040693.929152,
-    "ast_hash": "54187b848454b3e134cd672a56c80eac",
+    "mtime": 1794082096.8878784,
+    "seen": 1794082519.658184,
+    "ast_hash": "72d42a46cb52ee9a4b7725956831d924",
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/projects.ts": {
-    "mtime": 1794041298.0826266,
-    "seen": 1794041340.7788596,
-    "ast_hash": "20a30accee09e9d62fff650e2838ffb0",
+    "mtime": 1794082187.7846825,
+    "seen": 1794082519.658184,
+    "ast_hash": "890210fb23af45222b019198c98efd3c",
     "semantic_hash": ""
   },
   "ui-launcher/pages/api/system.ts": {
@@ -216,9 +216,9 @@
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/GlobalChatView.tsx": {
-    "mtime": 1794041865.0319643,
-    "seen": 1794041899.306185,
-    "ast_hash": "6463e18667311cde6f2a280dc9cb4633",
+    "mtime": 1794082378.0654645,
+    "seen": 1794082519.658184,
+    "ast_hash": "10b142901f6a305dd376c83d6d0b3bdd",
     "semantic_hash": ""
   },
   "ui-launcher/components/studios/PluginsRulesView.tsx": {
@@ -315,30 +315,6 @@
     "mtime": 1792973230.9564874,
     "seen": 1792973403.4061897,
     "ast_hash": "94354ddd050b347f10879348b3b73de5",
-    "semantic_hash": ""
-  },
-  "projetos/global/src/v0id-game-engine/src_cpp/v0id_engine.cpp": {
-    "mtime": 1792969075.2956855,
-    "seen": 1792973403.4061897,
-    "ast_hash": "4e57cceb2ecdb94adf9a8e69abbf22c3",
-    "semantic_hash": ""
-  },
-  "projetos/global/src/v0id-game-engine/src_cpp/v0id_engine.h": {
-    "mtime": 1792969075.294642,
-    "seen": 1792973403.4061897,
-    "ast_hash": "9863c1f66dd20c904fba4ccd29e76726",
-    "semantic_hash": ""
-  },
-  "projetos/global/src/v0id-game-engine/tools/blender_export_pipeline.py": {
-    "mtime": 1792969075.2956855,
-    "seen": 1792973403.4061897,
-    "ast_hash": "64b9a224494971aab3dc3110ca7caa4f",
-    "semantic_hash": ""
-  },
-  "projetos/global/src/v0id-game-engine/assets/v0id_icon.svg": {
-    "mtime": 1792968275.2179368,
-    "seen": 1792973403.4061897,
-    "ast_hash": "d3ee9125623b0ce5501dc2a91c0fb3e6",
     "semantic_hash": ""
   },
   "v0id_self_healing_suite.mjs": {
@@ -615,6 +591,12 @@
     "mtime": 1794079883.2701042,
     "seen": 1794079938.3120944,
     "ast_hash": "e2ec320674bf3fbb8688eb97698a7afe",
+    "semantic_hash": ""
+  },
+  "scripts/fix_projects.js": {
+    "mtime": 1794082013.236981,
+    "seen": 1794082519.658184,
+    "ast_hash": "bf5febb081d5564fb8c935e2eeeb159d",
     "semantic_hash": ""
   }
 }

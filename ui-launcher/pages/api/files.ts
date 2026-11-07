@@ -21,8 +21,11 @@ const IGNORED_NAMES = new Set([
   '.cache', '.turbo', '.idea', '.vscode', 'coverage', 'out', 'bin', 'obj', '.flow_browser'
 ]);
 
-function getProjectFolder(id: string): string {
+function getProjectFolder(id: string): string | null {
   const cleanId = String(id || 'global').toLowerCase().trim();
+  if (cleanId === 'global') {
+    return null;
+  }
   if (cleanId === 'v0id') {
     return path.resolve(process.cwd(), '..');
   }
@@ -37,10 +40,10 @@ function getProjectFolder(id: string): string {
     }
   } catch {}
   const candidate = path.resolve(VAULT_ROOT, cleanId);
-  if (!fs.existsSync(candidate)) {
-    try { fs.mkdirSync(candidate, { recursive: true }); } catch {}
+  if (fs.existsSync(candidate)) {
+    return candidate;
   }
-  return candidate;
+  return null;
 }
 
 function scanDir(dir: string, baseDir: string, depth = 0, maxDepth = 6, state = { count: 0, limit: 1200 }): any[] {
@@ -84,7 +87,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const projectId = (req.query.projectId as string) || 'v0id';
     const projDir = getProjectFolder(projectId);
-    fs.mkdirSync(projDir, { recursive: true });
+
+    if (!projDir) {
+      if (projectId === 'global') {
+        return res.status(200).json({
+          success: true,
+          files: [],
+          projectDir: null,
+          message: 'Modo Geral ativo (nenhum repositório vinculado).'
+        });
+      }
+      return res.status(404).json({ error: `Repositório "${projectId}" não possui pasta associada.` });
+    }
+
+    if (!fs.existsSync(projDir)) {
+      fs.mkdirSync(projDir, { recursive: true });
+    }
 
     // 1. ACTION: ABRIR ARQUIVO NO PROGRAMA PADRÃO DO WINDOWS
     if (req.method === 'POST' && req.query.action === 'open_local') {

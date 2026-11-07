@@ -129,6 +129,23 @@ export default function GlobalChatView({
   const [quickPaths, setQuickPaths] = useState<Array<{ name: string; path: string }>>([]);
   const [isBrowsingFolder, setIsBrowsingFolder] = useState(false);
 
+  // Navegação Interativa de Pastas no Modal
+  const [exploredDir, setExploredDir] = useState<{
+    currentPath: string;
+    parentPath: string | null;
+    name: string;
+    isRepo: boolean;
+    folders: Array<{ name: string; path: string }>;
+    files: Array<{ name: string; path: string; size: number; ext: string }>;
+  } | null>(null);
+  const [isExploring, setIsExploring] = useState(false);
+
+  // Gaveta de Arquivos do Repositório Ativo
+  const [repoFilesDrawerOpen, setRepoFilesDrawerOpen] = useState(false);
+  const [repoFiles, setRepoFiles] = useState<any[]>([]);
+  const [repoFilesLoading, setRepoFilesLoading] = useState(false);
+  const [repoFileSearch, setRepoFileSearch] = useState('');
+
   const projectSlug = selectedProjectId || 'global';
   const currentProjectObj = projectList.find(p => p.id === selectedProjectId) || {
     id: selectedProjectId,
@@ -278,6 +295,94 @@ export default function GlobalChatView({
     } catch {}
   };
 
+  // Explora diretório no PC para navegação visual no modal
+  const exploreDirectory = async (dirPath: string) => {
+    setIsExploring(true);
+    try {
+      const res = await fetch(`/api/projects?action=explore_dir&path=${encodeURIComponent(dirPath)}`);
+      const data = await res.json();
+      if (data.success) {
+        setExploredDir(data);
+        setLinkPathInput(data.currentPath);
+        if (!linkNameInput.trim()) {
+          setLinkNameInput(data.name);
+        }
+      } else {
+        showToast(`Aviso: ${data.error || 'Não foi possível explorar a pasta'}`);
+      }
+    } catch (err: any) {
+      showToast(`Falha na leitura da pasta: ${err.message}`);
+    } finally {
+      setIsExploring(false);
+    }
+  };
+
+  // Carrega arquivos reais do repositório ativo
+  const loadRepoFiles = async (projId: string) => {
+    if (!projId || projId === 'global') {
+      setRepoFiles([]);
+      return;
+    }
+    setRepoFilesLoading(true);
+    try {
+      const res = await fetch(`/api/files?projectId=${encodeURIComponent(projId)}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.files)) {
+        setRepoFiles(data.files);
+      } else {
+        setRepoFiles([]);
+      }
+    } catch {
+      setRepoFiles([]);
+    } finally {
+      setRepoFilesLoading(false);
+    }
+  };
+
+  // Abre arquivo no programa padrão do Windows
+  const handleOpenFileInWindows = async (relPath: string) => {
+    try {
+      const res = await fetch(`/api/files?projectId=${encodeURIComponent(selectedProjectId)}&action=open_local`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ relPath })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Arquivo aberto no Windows: ${relPath}`);
+      }
+    } catch {}
+  };
+
+  // Vinculação direta em 1 clique a partir da pasta explorada
+  const handleLinkDirect = async (folderPath: string, name?: string) => {
+    try {
+      const res = await fetch('/api/projects?action=link_repo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name || undefined,
+          localPath: folderPath
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✅ Repositório "${data.project.name}" vinculado com sucesso!`);
+        setLinkModalOpen(false);
+        setLinkPathInput('');
+        setLinkNameInput('');
+        setExploredDir(null);
+        await loadProjects();
+        setSelectedProjectId(data.project.id);
+        loadRepoFiles(data.project.id);
+      } else {
+        showToast(`❌ Erro: ${data.error || 'Falha ao vincular pasta'}`);
+      }
+    } catch (err: any) {
+      showToast(`❌ Falha: ${err.message}`);
+    }
+  };
+
   // Abre Modal de Vinculação com Carregamento de Pastas do PC
   const openLinkModal = async () => {
     setLinkModalOpen(true);
@@ -286,6 +391,10 @@ export default function GlobalChatView({
       const data = await res.json();
       if (data.success && Array.isArray(data.paths)) {
         setQuickPaths(data.paths);
+        const preferred = data.paths.find((p: any) => p.path === 'C:\\Projetos' || p.name === 'space-tides') || data.paths[0];
+        if (preferred) {
+          exploreDirectory(preferred.path);
+        }
       }
     } catch {}
   };
@@ -293,7 +402,7 @@ export default function GlobalChatView({
   // Aciona Diálogo Nativo de Escolha de Pastas do Windows
   const handleBrowseFolderNative = async () => {
     setIsBrowsingFolder(true);
-    showToast('Abriu seletor de pastas do Windows na barra de tarefas...');
+    showToast('Abriu seletor nativo do Windows...');
     try {
       const res = await fetch('/api/projects?action=browse_folder', { method: 'POST' });
       const data = await res.json();
@@ -302,7 +411,10 @@ export default function GlobalChatView({
         if (!linkNameInput.trim()) {
           setLinkNameInput(data.name || '');
         }
+        exploreDirectory(data.folderPath);
         showToast(`Pasta selecionada: ${data.folderPath}`);
+      } else if (data.message) {
+        showToast(data.message);
       }
     } catch (err: any) {
       showToast(`Erro ao selecionar pasta: ${err.message}`);
@@ -954,23 +1066,26 @@ export default function GlobalChatView({
       {/* Modal de Vinculação de Repositório Local */}
       {linkModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0b0b14] border border-amber-500/40 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4 animate-fade-in">
-            <div className="flex items-center justify-between border-b border-[#1c1c2e] pb-3">
+          <div className="bg-[#0b0b14] border border-amber-500/40 rounded-2xl w-full max-w-2xl p-6 shadow-2xl space-y-4 animate-fade-in max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-[#1c1c2e] pb-3 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📁</span>
-                <h3 className="text-sm font-extrabold text-white">Vincular Repositório Local ao V0id OS</h3>
+                <div>
+                  <h3 className="text-sm font-extrabold text-white">Vincular Repositório Local ao V0id OS</h3>
+                  <p className="text-[11px] text-gray-400">Vincule qualquer projeto do computador para dar à IA contexto de código, arquivos e ferramentas com escopo.</p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setLinkModalOpen(false)}
-                className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded"
+                className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             {/* Botão Seletor Nativo do Windows */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 type="button"
                 onClick={handleBrowseFolderNative}
@@ -978,71 +1093,156 @@ export default function GlobalChatView({
                 className="w-full py-2.5 px-3 rounded-xl bg-[#141426] hover:bg-[#1d1d36] text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition shadow-lg shadow-amber-950/30"
               >
                 <span>📂</span>
-                <span>{isBrowsingFolder ? 'Aguardando seleção no Windows...' : 'Explorar Pastas no Computador...'}</span>
+                <span>{isBrowsingFolder ? 'Aguardando seleção na janela do Windows...' : 'Explorar Pastas no Computador (Seletor do Windows)...'}</span>
               </button>
             </div>
 
             {/* Sugestões de Pastas Rápidas no PC */}
             {quickPaths.length > 0 && (
-              <div>
+              <div className="flex-shrink-0">
                 <label className="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">
-                  Pastas e Repositórios Detectados no seu PC:
+                  Pastas e Repositórios Detectados (clique para inspecionar):
                 </label>
-                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1.5 bg-[#05050a] rounded-xl border border-[#1a1a2c]">
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 bg-[#05050a] rounded-xl border border-[#1a1a2c]">
                   {quickPaths.map((qp, idx) => (
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => {
-                        setLinkPathInput(qp.path);
-                        if (!linkNameInput.trim()) setLinkNameInput(qp.name);
-                      }}
-                      className="text-[10px] bg-[#121222] hover:bg-amber-950/60 text-gray-300 hover:text-amber-300 border border-[#232338] hover:border-amber-500/50 px-2.5 py-1 rounded-lg transition font-mono truncate max-w-[210px] cursor-pointer"
+                      onClick={() => exploreDirectory(qp.path)}
+                      className={`text-[10px] px-2.5 py-1 rounded-lg transition font-mono truncate max-w-[210px] cursor-pointer flex items-center gap-1 ${
+                        exploredDir?.currentPath === qp.path
+                          ? 'bg-amber-500/30 text-amber-200 border border-amber-400'
+                          : 'bg-[#121222] hover:bg-amber-950/60 text-gray-300 hover:text-amber-300 border border-[#232338]'
+                      }`}
                       title={qp.path}
                     >
-                      📁 {qp.name}
+                      <span>📁</span>
+                      <span className="truncate">{qp.name}</span>
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            <form onSubmit={handleLinkRepo} className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-bold text-gray-300 mb-1">
-                  Ou Digite / Cole o Caminho da Pasta no Computador:
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: C:\MeuJogo ou C:\Projetos\meu-app"
-                  value={linkPathInput}
-                  onChange={e => setLinkPathInput(e.target.value)}
-                  className="w-full bg-[#05050a] border border-[#28283e] focus:border-amber-400 rounded-xl px-3 py-2 text-xs text-white outline-none font-mono"
-                />
-                <p className="text-[10px] text-gray-500 mt-1">
-                  O V0id passará a ter acesso total de leitura, busca, edição e execução nesta pasta.
-                </p>
-              </div>
+            {/* Navegador e Pré-visualizador Interativo de Arquivos */}
+            {exploredDir && (
+              <div className="flex-1 min-h-[160px] max-h-56 overflow-hidden flex flex-col bg-[#06060c] border border-amber-500/30 rounded-xl p-3 flex-shrink-0">
+                <div className="flex items-center justify-between pb-2 border-b border-[#181828] text-xs">
+                  <div className="flex items-center gap-2 truncate">
+                    {exploredDir.parentPath && (
+                      <button
+                        type="button"
+                        onClick={() => exploreDirectory(exploredDir.parentPath!)}
+                        className="text-[10px] bg-[#141424] hover:bg-amber-900/40 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded cursor-pointer font-bold"
+                        title="Subir para pasta anterior"
+                      >
+                        ↑ Subir
+                      </button>
+                    )}
+                    <span className="font-mono text-[11px] text-gray-200 truncate">{exploredDir.currentPath}</span>
+                    {exploredDir.isRepo && (
+                      <span className="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-1.5 py-0.5 rounded font-bold">
+                        Git/Repo
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleLinkDirect(exploredDir.currentPath, exploredDir.name)}
+                    className="text-[11px] bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-1 rounded-lg shadow cursor-pointer whitespace-nowrap ml-2"
+                  >
+                    Vincular Esta Pasta
+                  </button>
+                </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-gray-300 mb-1">
-                  Nome do Projeto (Opcional):
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Space Tide"
-                  value={linkNameInput}
-                  onChange={e => setLinkNameInput(e.target.value)}
-                  className="w-full bg-[#05050a] border border-[#28283e] focus:border-amber-400 rounded-xl px-3 py-2 text-xs text-white outline-none"
-                />
+                <div className="flex-1 overflow-y-auto pt-2 grid grid-cols-2 gap-2 text-xs font-mono">
+                  {/* Subpastas */}
+                  <div>
+                    <span className="text-[10px] text-gray-500 font-sans font-bold uppercase block mb-1">Subpastas ({exploredDir.folders.length})</span>
+                    <div className="space-y-1">
+                      {exploredDir.folders.map((f, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => exploreDirectory(f.path)}
+                          className="w-full text-left px-2 py-1 rounded bg-[#0c0c16] hover:bg-amber-950/40 hover:text-amber-300 text-gray-300 truncate text-[11px] flex items-center gap-1.5 cursor-pointer border border-transparent hover:border-amber-500/30"
+                          title={`Entrar na pasta: ${f.name}`}
+                        >
+                          <span>📁</span>
+                          <span className="truncate">{f.name}</span>
+                        </button>
+                      ))}
+                      {exploredDir.folders.length === 0 && (
+                        <span className="text-[10px] text-gray-600 italic">Nenhuma subpasta</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Arquivos */}
+                  <div>
+                    <span className="text-[10px] text-gray-500 font-sans font-bold uppercase block mb-1">Arquivos ({exploredDir.files.length})</span>
+                    <div className="space-y-1">
+                      {exploredDir.files.map((file, i) => (
+                        <div
+                          key={i}
+                          className="px-2 py-1 rounded bg-[#0a0a14] text-gray-400 text-[11px] flex items-center justify-between border border-[#141424]"
+                          title={`${file.name} (${formatFileSize(file.size)})`}
+                        >
+                          <span className="truncate flex items-center gap-1">
+                            <span>📄</span>
+                            <span className="truncate text-gray-300">{file.name}</span>
+                          </span>
+                          <span className="text-[9px] text-gray-500 ml-1">{formatFileSize(file.size)}</span>
+                        </div>
+                      ))}
+                      {exploredDir.files.length === 0 && (
+                        <span className="text-[10px] text-gray-600 italic">Nenhum arquivo na raiz</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleLinkRepo} className="space-y-3 flex-shrink-0 pt-2 border-t border-[#1c1c2e]">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-bold text-gray-300 mb-1">
+                    Caminho Completo da Pasta / Repositório:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: C:\Projetos\space-tides ou C:\MeuApp"
+                    value={linkPathInput}
+                    onChange={e => {
+                      setLinkPathInput(e.target.value);
+                      if (e.target.value.trim().length > 3) {
+                        exploreDirectory(e.target.value.trim());
+                      }
+                    }}
+                    className="w-full bg-[#05050a] border border-[#28283e] focus:border-amber-400 rounded-xl px-3 py-1.5 text-xs text-white outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-300 mb-1">
+                    Nome de Exibição:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Space Tides"
+                    value={linkNameInput}
+                    onChange={e => setLinkNameInput(e.target.value)}
+                    className="w-full bg-[#05050a] border border-[#28283e] focus:border-amber-400 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1c1c2e]">
                 <button
                   type="button"
                   onClick={() => setLinkModalOpen(false)}
-                  className="px-3 py-1.5 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white/[0.05]"
+                  className="px-3 py-1.5 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white/[0.05] cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -1071,12 +1271,15 @@ export default function GlobalChatView({
               <span className="text-[11px] text-amber-400 font-bold mr-1.5 select-none">📁 Repo:</span>
               <select
                 value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedProjectId(e.target.value);
+                  loadRepoFiles(e.target.value);
+                }}
                 className="bg-transparent text-xs text-amber-200 font-bold outline-none cursor-pointer"
               >
                 {projectList.map(p => (
                   <option key={p.id} value={p.id} className="bg-[#0c0c16] text-white">
-                    {p.name}
+                    {p.id === 'global' ? '🌐 Geral (Sem Repositório)' : p.id === 'v0id' ? '🪐 V0id OS' : `📁 ${p.name}`}
                   </option>
                 ))}
               </select>
@@ -1092,8 +1295,15 @@ export default function GlobalChatView({
               )}
             </div>
 
+            {/* Se for modo Geral (sem repo vinculado) */}
+            {selectedProjectId === 'global' && (
+              <span className="text-[10px] text-gray-500 italic bg-[#10101c] px-2 py-0.5 rounded-lg border border-gray-800">
+                Nenhum repositório vinculado (Modo Livre)
+              </span>
+            )}
+
             {/* Caminho da pasta ativa com botão para abrir no Windows */}
-            {currentProjectObj.folderPath && (
+            {selectedProjectId !== 'global' && currentProjectObj.folderPath && (
               <button
                 onClick={handleOpenFolder}
                 title={`Abrir pasta no Windows Explorer: ${currentProjectObj.folderPath}`}
@@ -1101,6 +1311,21 @@ export default function GlobalChatView({
               >
                 <span>📂</span>
                 <span className="truncate font-mono text-[10px] text-gray-300">{currentProjectObj.folderPath}</span>
+              </button>
+            )}
+
+            {/* Botão para ver arquivos do repositório */}
+            {selectedProjectId !== 'global' && (
+              <button
+                onClick={() => {
+                  setRepoFilesDrawerOpen(true);
+                  loadRepoFiles(selectedProjectId);
+                }}
+                title="Explorar e ver os arquivos deste repositório"
+                className="text-[11px] bg-[#10101c] hover:bg-amber-900/30 text-amber-200 border border-amber-500/30 px-2 py-1 rounded-xl transition flex items-center gap-1 cursor-pointer font-bold whitespace-nowrap"
+              >
+                <span>📑</span>
+                <span>Ver Arquivos</span>
               </button>
             )}
 
@@ -1699,6 +1924,103 @@ export default function GlobalChatView({
           })}
         </div>
       </div>
+
+      {/* Drawer Lateral de Arquivos do Repositório Ativo */}
+      {repoFilesDrawerOpen && (
+        <div className="fixed inset-y-0 right-0 z-50 w-96 bg-[#0a0a14] border-l border-amber-500/30 shadow-2xl flex flex-col animate-fade-in">
+          <div className="p-4 border-b border-[#1c1c2e] flex items-center justify-between bg-[#07070e]">
+            <div className="flex items-center gap-2 truncate">
+              <span className="text-lg">📑</span>
+              <div className="truncate">
+                <h4 className="text-xs font-extrabold text-white truncate">{currentProjectObj.name}</h4>
+                <p className="text-[10px] text-gray-400 truncate font-mono">{currentProjectObj.folderPath || 'Sem pasta física'}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setRepoFilesDrawerOpen(false)}
+              className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="p-3 border-b border-[#181824] flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Buscar arquivos no repositório..."
+              value={repoFileSearch}
+              onChange={e => setRepoFileSearch(e.target.value)}
+              className="flex-1 bg-[#05050a] border border-[#232338] focus:border-amber-400 text-xs text-white rounded-xl px-3 py-1.5 outline-none font-mono"
+            />
+            <button
+              onClick={() => loadRepoFiles(selectedProjectId)}
+              title="Recarregar arquivos"
+              className="px-2 py-1.5 bg-[#121222] hover:bg-[#1a1a2e] text-amber-300 rounded-xl border border-[#28283e] text-xs cursor-pointer"
+            >
+              🔄
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            {repoFilesLoading && (
+              <div className="text-xs text-gray-400 text-center py-6">Carregando arquivos do repositório...</div>
+            )}
+            {!repoFilesLoading && repoFiles.length === 0 && (
+              <div className="text-xs text-gray-500 text-center py-6">
+                Nenhum arquivo encontrado neste repositório.
+              </div>
+            )}
+            {!repoFilesLoading && repoFiles
+              .filter(f => !repoFileSearch || f.name.toLowerCase().includes(repoFileSearch.toLowerCase()) || f.relPath.toLowerCase().includes(repoFileSearch.toLowerCase()))
+              .map((file, idx) => (
+                <div
+                  key={idx}
+                  className="p-2 rounded-xl bg-[#0e0e18] hover:bg-amber-950/30 border border-[#1a1a2c] hover:border-amber-500/30 transition flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                    <span className="text-xs">{file.isMedia ? '🖼️' : '📄'}</span>
+                    <div className="truncate">
+                      <div className="text-xs font-mono text-gray-200 truncate">{file.name}</div>
+                      <div className="text-[10px] text-gray-500 font-mono truncate">{file.relPath}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 shrink-0 ml-2">
+                    <button
+                      onClick={() => handleOpenFileInWindows(file.relPath)}
+                      title="Abrir arquivo no programa padrão do Windows"
+                      className="text-[10px] bg-[#141424] hover:bg-amber-900/50 text-amber-300 px-2 py-0.5 rounded cursor-pointer border border-[#232338]"
+                    >
+                      Abrir
+                    </button>
+                    <button
+                      onClick={() => {
+                        insertMention(file.relPath);
+                        setRepoFilesDrawerOpen(false);
+                      }}
+                      title="Mencionar este arquivo no chat"
+                      className="text-[10px] bg-[#141424] hover:bg-amber-900/50 text-gray-300 hover:text-amber-300 px-1.5 py-0.5 rounded cursor-pointer border border-[#232338]"
+                    >
+                      @
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+
+          <div className="p-3 border-t border-[#1c1c2e] bg-[#07070e] flex items-center justify-between text-xs">
+            <span className="text-gray-400 font-mono text-[10px]">{repoFiles.length} arquivos detectados</span>
+            {currentProjectObj.folderPath && (
+              <button
+                onClick={handleOpenFolder}
+                className="text-[11px] text-amber-300 hover:underline flex items-center gap-1 cursor-pointer font-bold"
+              >
+                <span>Abrir no Explorer</span>
+                <span>↗</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modal de Diffs & Snapshots */}
       <VisualDiffModal

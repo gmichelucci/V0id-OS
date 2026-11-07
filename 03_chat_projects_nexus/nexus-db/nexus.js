@@ -126,6 +126,10 @@ export class NexusDB {
     const v0idRoot = cwd.toLowerCase().endsWith('ui-launcher') ? path.resolve(cwd, '..') : cwd;
     const cleanId = String(projectId || 'global').toLowerCase().trim();
 
+    if (cleanId === 'global') {
+      return null;
+    }
+
     if (cleanId === 'v0id') {
       return v0idRoot;
     }
@@ -140,12 +144,10 @@ export class NexusDB {
 
     // Se houver diretório dedicado em c:\V0id\projetos\<cleanId>
     const candidate = path.resolve(v0idRoot, 'projetos', cleanId);
-    if (!fs.existsSync(candidate)) {
-      try {
-        fs.mkdirSync(candidate, { recursive: true });
-      } catch {}
+    if (fs.existsSync(candidate)) {
+      return candidate;
     }
-    return candidate;
+    return null;
   }
 
   // Cross-tag History

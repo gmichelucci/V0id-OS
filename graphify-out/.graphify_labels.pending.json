@@ -1,6 +1,6 @@
 {
   "0": "agent.test.js",
-  "1": "v0id_engine.cpp",
+  "1": "ref_node_path",
   "2": "NexusDB",
   "3": "index.js",
   "4": "package.json",
@@ -18,12 +18,18 @@
   "16": "v0id_blender_addon.py",
   "17": "GoogleFlowBridge",
   "18": "V0ID OS",
-  "19": "ref_node_path",
+  "19": "v0id_token_budget_loop.mjs",
   "20": "VISUAL_INSPECTION_REPORT.md",
   "21": "INTERACTIVE_TEST_REPORT.md",
   "22": "SCENES_INDEX.md",
   "23": "GlobalChatView.tsx",
-  "24": "cli.js",
+  "24": "V0idAgent",
   "25": "automations.ts",
-  "31": "generate_multi_res_icon.mjs"
+  "26": "EdgeCDPClient",
+  "27": "ref_node_url",
+  "28": "setup.js",
+  "29": "projects.ts",
+  "30": "ref_node_child_process",
+  "31": "generate_multi_res_icon.mjs",
+  "32": "v0id_self_healing_suite.mjs"
 }
