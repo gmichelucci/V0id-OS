@@ -1,0 +1,86 @@
+# =========================================================================
+# V0id OS — Official .gitignore (Zero-Leak Commercial Configuration)
+# =========================================================================
+
+# API Keys, Secrets & Credentials (NEVER COMMIT)
+.env
+.env.*
+*.env
+**/.env
+**/.env.*
+*.key
+*.pem
+*.cert
+*.pfx
+credentials.json
+token.json
+service_account*.json
+
+# Allow template files only
+!.env.example
+!**/.env.example
+
+# Node Dependencies & Package Managers
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js Build Outputs & Caches
+.next/
+ui-launcher/.next/
+ui-launcher/out/
+ui-launcher/tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Logs, Diagnostic Dumps & Process Control
+*.log
+loop_runner.log
+v0id_loop.pid
+v0id_loop.stop
+.system_generated/
+test_followup.mjs
+
+# Browser Profiles, Headless Sessions & Automation Data
+.flow_browser/
+*/.flow_browser/
+**/.flow_browser/
+.temp_edge_profile/
+screenshots/
+**/screenshots/temp_profile/
+
+# Databases, SQLite Engines & Vector Stores (Local Vault Isolation)
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+03_chat_projects_nexus/nexus-db/*.db*
+03_chat_projects_nexus/nexus-db/snapshots/
+**/snapshots/
+03_chat_projects_nexus/projects-vault/*
+!03_chat_projects_nexus/projects-vault/.gitkeep
+backup_drive/
+drive_backup/
+
+# User Generated Media & Personal Assets (Total Privacy)
+ui-launcher/public/generated/*
+!ui-launcher/public/generated/.gitkeep
+projetos/*/assets/images/*
+projetos/*/assets/videos/*
+projetos/*/assets/audio/*
+projetos/*/.git/
+!projetos/**/.gitkeep
+
+# Graphify AST Cache & Semantic Caches
+graphify-out/cache/
+**/cache/ast/
+
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.AppleDouble
+.LSOverride

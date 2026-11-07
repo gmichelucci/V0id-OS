@@ -1,0 +1,17 @@
+{
+  "name": "rea",
+  "displayName": "REA (Reverse Engineer Anything)",
+  "version": "6.8.0",
+  "author": "morluto",
+  "description": "MCP server and reverse engineering agent connecting disassemblers (Ghidra, Cutter, Rizin, JEB), WASM decompilers, and binary analyzers to V0id OS.",
+  "command": "npx",
+  "args": ["--yes", "rea-agents", "--mcp"],
+  "capabilities": [
+    "binary_analysis",
+    "decompile_functions",
+    "wasm_interface_compare",
+    "game_package_inspection",
+    "evidence_ledger"
+  ],
+  "status": "ready"
+}

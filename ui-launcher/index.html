@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>V0ID Chat</title>
+<style>
+  body{font-family:sans-serif;background:#f0f0f0;margin:0;padding:0}
+  #chat{max-width:800px;margin:auto;padding:1rem;overflow-y:auto;height:90vh;}
+  .msg{background:#fff;margin:.5rem 0;padding:.5rem;border-radius:4px;position:relative;}
+  .msg.assistant{border-left:4px solid #4a90e2;}
+  .msg.user{border-left:4px solid #7ed321;}
+  .msg .content{user-select:text;}
+  .actions{position:absolute;top:4px;right:4px;}
+  .actions button{background:none;border:none;color:#555;cursor:pointer;margin-left:4px;}
+</style>
+</head>
+<body>
+<div id="chat"></div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
